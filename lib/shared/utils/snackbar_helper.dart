@@ -34,7 +34,7 @@ class SnackbarHelper {
     Get.snackbar(
       title ?? "Snackbar Title",
       message ?? "Snackbar Message",
-      duration: Duration(seconds: 5),
+      duration: const Duration(seconds: 5),
       snackPosition: SnackPosition.BOTTOM,
       colorText: Colors.white,
       backgroundColor: ColorConstants.highlightPrimary.withOpacity(.7),
@@ -52,7 +52,7 @@ class SnackbarHelper {
         },
         child: Text(
           actionText ?? 'Dismiss',
-          style: TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white),
         ),
       ),
     );

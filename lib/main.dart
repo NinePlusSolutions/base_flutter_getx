@@ -13,7 +13,7 @@ FutureOr<void> main() async {
   await dotenv.load(fileName: fileName);
   await DependencyInjection.init();
 
-  runApp(App());
+  runApp(const App());
 
   configLoading();
 }

@@ -38,7 +38,7 @@ class InputWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Container(
+      child: SizedBox(
         height: 36,
         child: TextFormField(
           onFieldSubmitted: onFieldSubmitted,
@@ -56,14 +56,14 @@ class InputWidget extends StatelessWidget {
             suffixIcon: _getSuffix(),
             // suffixIcon: ,
             filled: true,
-            prefixIcon: SizedBox(
+            prefixIcon: const SizedBox(
               width: 20,
               height: 20,
               child: Center(
                 child: Icon(Icons.search),
               ),
             ),
-            fillColor: fillColor ?? context.colors.background,
+            fillColor: fillColor ?? context.colors.surface,
             contentPadding: EdgeInsets.zero,
             hintText: hintText ?? 'Tìm kiếm...',
             hintStyle: hintStyle,
@@ -98,7 +98,7 @@ class InputWidget extends StatelessWidget {
           GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onTap: onClear,
-            child: SizedBox(
+            child: const SizedBox(
               width: 24,
               height: 24,
               child: Center(
@@ -190,7 +190,7 @@ class _SearchInputWidgetState extends State<SearchInputWidget> {
   _listener() {
     if (mounted) {
       setState(() {
-        _showClear = _controller.text.isNotEmpty ?? false;
+        _showClear = _controller.text.isNotEmpty;
       });
     }
   }
@@ -261,7 +261,6 @@ class _SearchInputWidgetState extends State<SearchInputWidget> {
 
     try {
       await widget.onSearch?.call(value);
-    } catch (e) {
     } finally {
       if (mounted) {
         setState(() {

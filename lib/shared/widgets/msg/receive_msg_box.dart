@@ -8,10 +8,12 @@ import 'msg_box.dart';
 
 class ReceiveMsgBox extends MsgBox {
   final String message;
-  final AnimationController animationController;
-  const ReceiveMsgBox(
-      {Key? key, required this.message, required this.animationController})
-      : super(key: key, animationController: animationController);
+
+  const ReceiveMsgBox({
+    super.key,
+    required this.message,
+    required super.animationController
+  });
 
   @override
   Widget buildWidgets(BuildContext context) {
@@ -25,12 +27,12 @@ class ReceiveMsgBox extends MsgBox {
             height: 46,
             fit: BoxFit.fill,
             imageUrl: 'https://reqres.in/img/faces/2-image.jpg',
-            placeholder: (context, url) => Image(
+            placeholder: (context, url) => const Image(
               image: AssetImage('assets/images/icon_success.png'),
             ),
-            errorWidget: (context, url, error) => Icon(Icons.error),
+            errorWidget: (context, url, error) => const Icon(Icons.error),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Transform(
             alignment: Alignment.center,
             transform: Matrix4.rotationY(math.pi),
@@ -38,8 +40,8 @@ class ReceiveMsgBox extends MsgBox {
           ),
           Flexible(
             child: Container(
-              padding: EdgeInsets.all(14),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
                   topRight: Radius.circular(18),
@@ -49,7 +51,7 @@ class ReceiveMsgBox extends MsgBox {
               ),
               child: Text(
                 message,
-                style: TextStyle(color: Colors.black, fontSize: 14),
+                style: const TextStyle(color: Colors.black, fontSize: 14),
               ),
             ),
           ),
@@ -58,11 +60,11 @@ class ReceiveMsgBox extends MsgBox {
     );
 
     return Padding(
-      padding: EdgeInsets.only(right: 50.0, left: 10, top: 10, bottom: 5),
+      padding: const EdgeInsets.only(right: 50.0, left: 10, top: 10, bottom: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
           messageTextGroup,
         ],
       ),

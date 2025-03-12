@@ -1,3 +1,4 @@
+// ignore: depend_on_referenced_packages
 import 'package:json_annotation/json_annotation.dart';
 
 part 'coordinates.g.dart';
@@ -25,6 +26,5 @@ class Coordinates {
     );
   }
 
-  @override
   List<Object?> get props => [lat, lng];
 }

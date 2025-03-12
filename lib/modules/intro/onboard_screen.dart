@@ -30,7 +30,7 @@ class _OnboardScreenState extends State<OnboardScreen> {
           Expanded(
             child: PageView(
               controller: _pageController,
-              children: [
+              children: const [
                 OnboardPage(
                   image:
                       'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',

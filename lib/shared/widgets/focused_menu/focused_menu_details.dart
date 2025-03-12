@@ -11,12 +11,12 @@ class FocusedMenuDetails extends StatefulWidget {
   final Widget child;
 
   const FocusedMenuDetails({
-    Key? key,
+    super.key,
     required this.menuContent,
     required this.childOffset,
     required this.childSize,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   _FocusedMenuDetailsState createState() => _FocusedMenuDetailsState();
@@ -51,49 +51,47 @@ class _FocusedMenuDetailsState extends State<FocusedMenuDetails>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Container(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            GestureDetector(
-              onTap: () {
-                _controller.reverse();
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          GestureDetector(
+            onTap: () {
+              _controller.reverse();
 
-                Navigator.pop(context);
-              },
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                child: Container(
-                  color: Colors.black.withOpacity(0.3),
+              Navigator.pop(context);
+            },
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 20.0,
+            left: 15.0,
+            child: SlideTransition(
+              position: _pushUpAndDownAnimation,
+              child: _buildActions(),
+            ),
+          ),
+          Positioned(
+            top: widget.childOffset.dy,
+            left: widget.childOffset.dx,
+            child: AbsorbPointer(
+              absorbing: true,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 ),
+                width: widget.childSize.width,
+                height: widget.childSize.height,
+                child: widget.child,
               ),
             ),
-            Positioned(
-              bottom: 20.0,
-              left: 15.0,
-              child: SlideTransition(
-                position: _pushUpAndDownAnimation,
-                child: _buildActions(),
-              ),
-            ),
-            Positioned(
-              top: widget.childOffset.dy,
-              left: widget.childOffset.dx,
-              child: AbsorbPointer(
-                absorbing: true,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                  ),
-                  width: widget.childSize.width,
-                  height: widget.childSize.height,
-                  child: widget.child,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

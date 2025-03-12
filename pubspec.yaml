@@ -42,8 +42,9 @@ flutter:
   assets:
     - assets/images/
     - assets/svgs/
-    - .env.dev
-    - .env.prod
+    # Uncomment when this file is created
+#    - .env.dev
+#    - .env.prod
 
   # see https://flutter.dev/to/font-from-package
   fonts:

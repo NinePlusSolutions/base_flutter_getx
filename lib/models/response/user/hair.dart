@@ -1,3 +1,4 @@
+// ignore: depend_on_referenced_packages
 import 'package:json_annotation/json_annotation.dart';
 
 part 'hair.g.dart';
@@ -23,6 +24,5 @@ class Hair {
     );
   }
 
-  @override
   List<Object?> get props => [color, type];
 }

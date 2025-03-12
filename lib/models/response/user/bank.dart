@@ -1,3 +1,4 @@
+// ignore: depend_on_referenced_packages
 import 'package:json_annotation/json_annotation.dart';
 
 part 'bank.g.dart';
@@ -38,7 +39,6 @@ class Bank {
     );
   }
 
-  @override
   List<Object?> get props {
     return [
       cardExpire,

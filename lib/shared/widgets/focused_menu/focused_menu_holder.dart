@@ -6,8 +6,7 @@ import 'focused_menu_details.dart';
 class FocusedMenuHolder extends StatefulWidget {
   final Widget child, menuContent;
 
-  const FocusedMenuHolder({
-    Key? key,
+  const FocusedMenuHolder({super.key,
     required this.child,
     required this.menuContent,
   });
@@ -18,7 +17,7 @@ class FocusedMenuHolder extends StatefulWidget {
 
 class _FocusedMenuHolderState extends State<FocusedMenuHolder> {
   GlobalKey containerKey = GlobalKey();
-  Offset childOffset = Offset(0, 0);
+  Offset childOffset = const Offset(0, 0);
   late Size childSize;
 
   getOffset() {
@@ -26,7 +25,7 @@ class _FocusedMenuHolderState extends State<FocusedMenuHolder> {
     Size size = renderBox!.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     setState(() {
-      this.childOffset = Offset(offset.dx, offset.dy);
+      childOffset = Offset(offset.dx, offset.dy);
       childSize = size;
     });
   }
@@ -40,16 +39,16 @@ class _FocusedMenuHolderState extends State<FocusedMenuHolder> {
         await Navigator.push(
           context,
           PageRouteBuilder(
-            transitionDuration: Duration(milliseconds: 100),
+            transitionDuration: const Duration(milliseconds: 100),
             pageBuilder: (context, animation, secondaryAnimation) {
               animation = Tween(begin: 0.0, end: 1.0).animate(animation);
               return FadeTransition(
                 opacity: animation,
                 child: FocusedMenuDetails(
                   menuContent: widget.menuContent,
-                  child: widget.child,
                   childOffset: childOffset,
                   childSize: childSize,
+                  child: widget.child,
                 ),
               );
             },

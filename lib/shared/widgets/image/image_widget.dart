@@ -76,7 +76,6 @@ class ImageWidget extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
-      color: color,
       semanticsLabel: semanticsLabel,
     );
 
@@ -179,12 +178,12 @@ class ImageWidget extends StatelessWidget {
         borderRadius: shape == BoxShape.circle
             ? null
             : borderRadius ?? BorderRadius.circular(12),
-        gradient: LinearGradient(colors: []),
+        gradient: const LinearGradient(colors: []),
       ),
       width: width,
       height: height,
       alignment: Alignment.center,
-      child: Text(
+      child: const Text(
         // defaultName?.getCharacterName() ?? 'N/A',
         // style: context.headline.copyWith(
         //   color: context.colors.surface,

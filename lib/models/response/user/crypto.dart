@@ -1,3 +1,4 @@
+// ignore: depend_on_referenced_packages
 import 'package:json_annotation/json_annotation.dart';
 
 part 'crypto.g.dart';
@@ -28,6 +29,5 @@ class Crypto {
     );
   }
 
-  @override
   List<Object?> get props => [coin, wallet, network];
 }

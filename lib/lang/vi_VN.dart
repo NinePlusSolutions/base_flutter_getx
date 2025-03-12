@@ -1,5 +1,5 @@
 // ignore_for_file: file_names
-
+// ignore: constant_identifier_names
 const Map<String, String> vi_VN = {
   "password": "Mật khẩu",
   "email": "Email",
