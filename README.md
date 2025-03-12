@@ -51,7 +51,7 @@ lib/
 
 ## Requirements
 
-- **Flutter**: 3.24.2  
+- **Flutter**: 3.29.0  
   > It is recommended to use [FVM](https://fvm.app/) for managing Flutter versions.
 
 - **Xcode**: Version 15.0 or higher  
