@@ -1,0 +1,96 @@
+name: flutter_getx_boilerplate
+description: "A boilerplate for Flutter GetX project"
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: 1.0.8
+  get: 4.6.6
+  shared_preferences: 2.3.2
+  wave: 0.2.2  
+  flutter_easyloading: 3.0.5
+  flutter_svg: 2.0.10+1
+  flutter_staggered_grid_view: 0.7.0
+  cached_network_image: 3.4.1
+  flutter_native_splash: ^2.4.3
+  shimmer: 3.0.0
+  smooth_page_indicator: ^1.2.0+3
+  easy_debounce: ^2.0.3
+  dio: ^5.7.0
+  intl: ^0.20.1
+  path_provider: ^2.1.5
+  flutter_dotenv: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+  flutter_flavorizr: ^2.2.3
+  build_runner: ^2.4.13
+  json_serializable: ^6.9.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/svgs/
+    - .env.dev
+    - .env.prod
+
+  # see https://flutter.dev/to/font-from-package
+  fonts:
+    - family: Cabin
+      fonts:
+        - asset: assets/fonts/Cabin-VariableFont_wdth,wght.ttf
+        - asset: assets/fonts/Cabin-Italic-VariableFont_wdth,wght.ttf
+          style: italic
+
+flavorizr:
+  flavors:
+    dev:
+      app:
+        name: "[DEV] Flutter GetX" # replace with your app name
+      android:
+        applicationId: "com.example.getx.dev" # replace with your package name
+        icon: "assets/system/logo_circle.png" # replace with your icon path
+        
+        # optional, if you want to use firebase
+        # firebase:
+        #   config: ".firebase/apple/google-services-dev.json"
+  
+      ios:
+        bundleId: "com.example.getx.dev" # replace with your bundle id
+        icon: "assets/system/logo_circle.png"  # replace with your icon path
+        # optional, if you want to use firebase
+        # firebase:
+        #   config: ".firebase/apple/GoogleService-Info-dev.json"
+  
+    prod:
+      app:
+        name: "Flutter GetX" # replace with your app name
+      android:
+          applicationId: "com.example.getx" # replace with your package name
+          icon: "assets/system/logo_circle.png" # replace with your icon path
+      ios:
+          bundleId: "com.example.getx" # replace with your package name
+          icon: "assets/system/logo_circle.png" # replace with your icon path
+
+# config you app native splash screen
+# for more details see https://pub.dev/packages/flutter_native_splash
+flutter_native_splash:
+  color: "#ffff"
+  image: "assets/system/logo_circle.png" # replace with your splash screen image path
+
+  android_12:
+    image: "assets/system/logo_circle.png" # replace with your splash screen image path
+    icon_background_color: "#ffffff" # replace with your background color
+
+  ios: true          
