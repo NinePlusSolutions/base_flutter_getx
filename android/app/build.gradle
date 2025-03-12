@@ -13,12 +13,12 @@ android {
     productFlavors {
         dev {
             dimension "flavor-type"
-            applicationId "com.example.getx.dev"
+            applicationId "com.pixel.baseapp.dev"
             resValue "string", "app_name", "[DEV] Flutter GetX"
         }
         prod {
             dimension "flavor-type"
-            applicationId "com.example.getx"
+            applicationId "com.pixel.baseapp"
             resValue "string", "app_name", "Flutter GetX"
         }
     }

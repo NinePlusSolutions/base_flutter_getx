@@ -59,7 +59,7 @@ flavorizr:
       app:
         name: "[DEV] Flutter GetX" # replace with your app name
       android:
-        applicationId: "com.example.getx.dev" # replace with your package name
+        applicationId: "com.pixel.baseapp.dev"
         icon: "assets/system/logo_circle.png" # replace with your icon path
         
         # optional, if you want to use firebase
@@ -67,7 +67,7 @@ flavorizr:
         #   config: ".firebase/apple/google-services-dev.json"
   
       ios:
-        bundleId: "com.example.getx.dev" # replace with your bundle id
+        bundleId: "com.pixel.baseapp.dev"
         icon: "assets/system/logo_circle.png"  # replace with your icon path
         # optional, if you want to use firebase
         # firebase:
@@ -77,10 +77,10 @@ flavorizr:
       app:
         name: "Flutter GetX" # replace with your app name
       android:
-          applicationId: "com.example.getx" # replace with your package name
+          applicationId: "com.pixel.baseapp"
           icon: "assets/system/logo_circle.png" # replace with your icon path
       ios:
-          bundleId: "com.example.getx" # replace with your package name
+          bundleId: "com.pixel.baseapp"
           icon: "assets/system/logo_circle.png" # replace with your icon path
 
 # config you app native splash screen
