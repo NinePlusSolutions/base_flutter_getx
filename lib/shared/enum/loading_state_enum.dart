@@ -1,0 +1,1 @@
+enum LoadingType { page, list, grip, custom }

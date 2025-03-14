@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/shimmer/page_loading.dart';
-import 'package:shimmer/shimmer.dart';
 
-enum LoadingType { page, list, grip, custom }
+import 'package:shimmer/shimmer.dart';
 
 class ShimmerLoadingContainer extends StatelessWidget {
   const ShimmerLoadingContainer({

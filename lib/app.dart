@@ -9,7 +9,7 @@ import 'package:get/get_core/src/smart_management.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:get/get_navigation/src/routes/transitions_type.dart';
 
-import 'flavors.dart';
+import 'shared/enum/flavors_enum.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -34,8 +34,7 @@ class App extends StatelessWidget {
         fallbackLocale: TranslationService.fallbackLocale,
         translations: TranslationService(),
         builder: EasyLoading.init(),
-        themeMode:
-            StorageService.themeMode == 2 ? ThemeMode.dark : ThemeMode.light,
+        themeMode: StorageService.themeModeStorage.themeMode,
       ),
     );
   }

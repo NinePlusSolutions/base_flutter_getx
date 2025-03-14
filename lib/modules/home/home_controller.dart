@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_getx_boilerplate/base/base_controller.dart';
+import 'package:flutter_getx_boilerplate/modules/base/base_controller.dart';
 import 'package:flutter_getx_boilerplate/models/response/error/error_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/user/user.dart';
 import 'package:flutter_getx_boilerplate/repositories/auth_repository.dart';

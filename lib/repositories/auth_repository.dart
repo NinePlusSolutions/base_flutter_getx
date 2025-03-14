@@ -15,7 +15,7 @@ class AuthRepository extends BaseRepository {
   Future<LoginResponse> login(LoginRequest request) async {
     try {
       final res = await apiClient.post(
-        'auth/login',
+        ApiEndpoints.login,
         data: request.toJson(),
       );
 
@@ -30,7 +30,7 @@ class AuthRepository extends BaseRepository {
   Future<User?> me() async {
     try {
       final res = await apiClient.get(
-        'auth/me',
+        ApiEndpoints.me,
       );
 
       return User.fromJson(res.data);

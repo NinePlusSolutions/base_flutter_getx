@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 import 'package:flutter_getx_boilerplate/routes/navigator_helper.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/image/image_widget.dart';
