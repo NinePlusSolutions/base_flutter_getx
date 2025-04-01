@@ -14,12 +14,12 @@ android {
         dev {
             dimension "flavor-type"
             applicationId "com.pixel.baseapp.dev"
-            resValue "string", "app_name", "[DEV] Flutter GetX"
+            resValue "string", "app_name", "[DEV] ERP App"
         }
         prod {
             dimension "flavor-type"
             applicationId "com.pixel.baseapp"
-            resValue "string", "app_name", "Flutter GetX"
+            resValue "string", "app_name", "ERP App"
         }
     }
 
@@ -30,8 +30,14 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    dependencies {
+        // Add the core library desugaring dependency
+        coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
     }
 
     kotlinOptions {
