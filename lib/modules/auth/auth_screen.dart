@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/lang/generate/app_language_key.dart';
 import 'package:flutter_getx_boilerplate/modules/auth/auth_controller.dart';
+import 'package:flutter_getx_boilerplate/shared/constants/assets_path.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
+import 'package:flutter_getx_boilerplate/theme/text_theme.dart';
 import 'package:get/get.dart';
-import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 
 class AuthScreen extends GetView<AuthController> {
   const AuthScreen({super.key});
@@ -10,117 +12,73 @@ class AuthScreen extends GetView<AuthController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // resizeToAvoidBottomInset: false,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+            child: Column(
               children: [
-                Container(
-                  height: 50.hp,
-                  width: 100.wp,
-                  decoration: BoxDecoration(
-                    color: context.colors.primary.withOpacity(.2),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.image),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.h),
+                  child: Image.asset(
+                    AssetPath.iconNinePlus,
+                    width: 90.w,
+                    fit: BoxFit.cover,
                   ),
                 ),
-                _buildThemeButton(),
-                Positioned(
-                  top: 48,
-                  right: 16,
-                  child: PopupMenuButton<String>(
-                    onSelected: (String item) {
-                      controller.onChangeLanguage(item);
-                    },
-                    itemBuilder: (BuildContext context) => [
-                      const PopupMenuItem(
-                        value: 'en',
-                        child: Text('English'),
+                const Space(height: kDefaultPadding*2),
+                Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      AppLanguageKey.login,
+                      style: Typo.h1,
+                    ),),
+                const Space(height: kDefaultPadding),
+                Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      AppLanguageKey.login_with_your_code,
+                      style: Typo.actionL,
+                    ),),
+                const Space(height: kDefaultPadding*3),
+                Form(
+                  key: controller.formKey,
+                  autovalidateMode: AutovalidateMode.always,
+                  child: Column(
+                    children: [
+                      InputFieldWidget(
+                        label: AppLanguageKey.employee_code,
+                        controller: controller.emailController,
+                        hint: AppLanguageKey.employee_code,
                       ),
-                      const PopupMenuItem(
-                        value: 'vi',
-                        child: Text('Vietnamese'),
+                      const Space(),
+                      InputFieldWidget(
+                        label: AppLanguageKey.password,
+                        controller: controller.passwordController,
+                        hint: AppLanguageKey.enter_password.tr,
+                        fieldType: InputFieldType.password,
                       ),
+                      const Space(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '${AppLanguageKey.forgot_password}?',
+                          style: Typo.h4,
+                        ),),
+                      const Space(height: 40),
+                      ButtonWidget(
+                        text: AppLanguageKey.login,
+                        onPressed: controller.onLogin,
+                      ),
+                      const Space(height: 40),
                     ],
-                    child: const Icon(Icons.language),
                   ),
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(kDefaultPadding),
-              child: Form(
-                key: controller.formKey,
-                autovalidateMode: AutovalidateMode.always,
-                child: Column(
-                  children: [
-                    InputFieldWidget(
-                      label: "email".tr,
-                      controller: controller.emailController,
-                      hint: 'email_hint'.tr,
-                    ),
-                    const Space(),
-                    InputFieldWidget(
-                      label: "password".tr,
-                      controller: controller.passwordController,
-                      hint: 'enter_password'.tr,
-                      isHideContent: true,
-                    ),
-                    const Space(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: RichText(
-                          text: TextSpan(
-                        text: '${'dont_have_account'.tr} ',
-                        style: context.bodySmall,
-                        children: [
-                          TextSpan(
-                            text: 'register'.tr,
-                            style: context.bodySmall.copyWith(
-                              color: context.colors.primary,
-                            ),
-                          ),
-                        ],
-                      )),
-                    ),
-                    const Space(height: 40),
-                    ButtonWidget(
-                      text: "login".tr,
-                      onPressed: controller.onLogin,
-                    ),
-                    const Space(height: 40),
-                  ],
-                ),
-              ),
-            )
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Positioned _buildThemeButton() {
-    return Positioned(
-      top: 40,
-      left: 16,
-      child: Obx(() => PopupMenuButton<AppThemeMode>(
-        icon: Icon(controller.themeMode.value.icon),
-        onSelected: (mode) => controller.onChangeTheme(mode),
-        itemBuilder: (context) => AppThemeMode.values.map((mode) {
-          return PopupMenuItem(
-            value: mode,
-            child: Row(
-              children: [
-                Icon(mode.icon, color: context.colors.primary),
-                const SizedBox(width: 8),
-                Text(mode.name.capitalizeFirst ?? ""),
-              ],
-            ),
-          );
-        }).toList(),
-      )),
     );
   }
 

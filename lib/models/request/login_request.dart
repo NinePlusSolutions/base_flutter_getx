@@ -1,19 +1,19 @@
 class LoginRequest {
   final String username;
   final String password;
-  final int? expiresInMins;
+  final String? deviceToken;
 
   LoginRequest({
     required this.username,
     required this.password,
-    this.expiresInMins,
+    this.deviceToken,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'username': username,
+      'employeeNo': username,
       'password': password,
-      "expiresInMins": expiresInMins,
+      "deviceToken": deviceToken,
     };
   }
 }

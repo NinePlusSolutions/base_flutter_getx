@@ -2,8 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_getx_boilerplate/api/api.dart';
 import 'package:flutter_getx_boilerplate/models/models.dart';
 import 'package:flutter_getx_boilerplate/models/response/error/error_response.dart';
-import 'package:flutter_getx_boilerplate/models/response/login_response/login_response.dart';
-import 'package:flutter_getx_boilerplate/models/response/user/user.dart';
 import 'package:flutter_getx_boilerplate/repositories/base_repository.dart';
 import 'package:get/get.dart';
 
@@ -21,20 +19,19 @@ class AuthRepository extends BaseRepository {
 
       return LoginResponse.fromJson(res.data);
     } on DioException catch (e) {
-      throw handleError(e);
-    } catch (e) {
-      throw ErrorResponse(message: 'unknown_error'.tr);
-    }
-  }
-
-  Future<User?> me() async {
-    try {
-      final res = await apiClient.get(
-        ApiEndpoints.me,
-      );
-
-      return User.fromJson(res.data);
-    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map<String, dynamic>) {
+          return LoginResponse(
+            succeeded: false,
+            messages: [
+              Message(
+                messageText: errorData['messages']?[0]['messageText'] ?? "",
+              ),
+            ],
+          );
+        }
+      }
       throw handleError(e);
     } catch (e) {
       throw ErrorResponse(message: 'unknown_error'.tr);
