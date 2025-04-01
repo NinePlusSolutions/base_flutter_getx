@@ -50,7 +50,3 @@ app.*.map.json
 
 model.json
 *.g.dart
-
-# Cursor config folder
-.cursor/
-.cursorignore

@@ -3,7 +3,6 @@ import 'package:flutter_getx_boilerplate/api/interceptor.dart';
 import 'package:flutter_getx_boilerplate/shared/enum/flavors_enum.dart';
 import 'package:get/get.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
-import 'package:requests_inspector/requests_inspector.dart';
 
 class ApiServices extends GetxService {
   late final dio.Dio _dio;
@@ -23,7 +22,6 @@ class ApiServices extends GetxService {
     _dio.interceptors.addAll(
       [
         InterceptorClient(_dio),
-        RequestsInspectorInterceptor(),
       ],
     );
   }

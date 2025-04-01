@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/routes/navigator_helper.dart';
-import 'package:flutter_getx_boilerplate/shared/constants/assets_path.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
@@ -33,25 +32,20 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     final accessToken = StorageService.token;
-    NavigatorHelper.toAuth();
-    // if (accessToken != null) {
-    //   NavigatorHelper.toHome();
-    // } else {
-    //   NavigatorHelper.toAuth();
-    // }
+    if (accessToken != null) {
+      NavigatorHelper.toHome();
+    } else {
+      NavigatorHelper.toAuth();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
 
-    return Scaffold(
+    return const Scaffold(
       body: Center(
-        child: Image.asset(
-          AssetPath.iconNinePlus,
-          width: 200.w,
-          fit: BoxFit.cover,
-        ),
+        child: Text("Welcome to SplashScreen"),
       ),
     );
   }

@@ -15,18 +15,6 @@ class NavigatorHelper {
   static toRegister() {}
 
   static toHome() {
-    return Get.toNamed(Routes.home);
-  }
-
-  static toBottomNav() {
-    return Get.offNamed(Routes.navigator);
-  }
-
-  static toProfileDetail() {
-    return Get.toNamed(Routes.profile);
-  }
-
-  static toNotification() {
-    return Get.toNamed(Routes.notification);
+    return Get.offNamed(Routes.home);
   }
 }

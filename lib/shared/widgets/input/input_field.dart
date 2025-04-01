@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
-import 'package:flutter_getx_boilerplate/theme/text_theme.dart';
-
-enum InputFieldType { normal, password, calendar }
 
 class InputFieldWidget extends StatelessWidget {
-  InputFieldWidget({
+  const InputFieldWidget({
     super.key,
     required this.controller,
     required this.hint,
@@ -15,6 +12,7 @@ class InputFieldWidget extends StatelessWidget {
     this.prefix,
     this.suffix,
     this.bgColor,
+    this.isHideContent,
     this.enable,
     this.keyboardType,
     this.onChanged,
@@ -30,10 +28,6 @@ class InputFieldWidget extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.maxLengthEnforcement,
     this.counterText,
-    this.fieldType = InputFieldType.normal,
-    this.readOnly = false,
-    this.onSelectDate,
-    this.labelStyle,
   });
 
   final TextEditingController controller;
@@ -44,6 +38,7 @@ class InputFieldWidget extends StatelessWidget {
   final Widget? prefix;
   final Widget? suffix;
   final Color? bgColor;
+  final bool? isHideContent;
   final bool? enable;
   final bool important;
   final bool inset;
@@ -55,14 +50,9 @@ class InputFieldWidget extends StatelessWidget {
   final InputBorder? border;
   final TextStyle? style;
   final TextStyle? inputStyle;
-  final TextStyle? labelStyle;
   final Function()? onEditingComplete;
   final TextCapitalization textCapitalization;
   final MaxLengthEnforcement? maxLengthEnforcement;
-  final ValueNotifier<bool> isObscureNotifier = ValueNotifier<bool>(true);
-  final InputFieldType fieldType;
-  final bool readOnly;
-  final Function()? onSelectDate;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -71,76 +61,52 @@ class InputFieldWidget extends StatelessWidget {
         label != null
             ? Row(
                 children: [
-                  Text(label!, style: labelStyle ?? Typo.bodyM),
+                  Text(label!, style: context.label.copyWith()),
                   if (important)
-                    Text(" *", style: TextStyle(color: context.colors.error)),
+                    Text(" *",
+                        style: context.label
+                            .copyWith(color: context.colors.error)),
                 ],
               )
             : const SizedBox(),
         const SizedBox(height: 4),
-        ValueListenableBuilder(
-            valueListenable: isObscureNotifier,
-            builder: (context, isObscured, child) {
-              return TextFormField(
-                textCapitalization: textCapitalization,
-                controller: controller,
-                textAlignVertical: TextAlignVertical.center,
-                style: inputStyle,
-                obscureText:
-                    fieldType == InputFieldType.password ? isObscured : false,
-                readOnly: fieldType == InputFieldType.calendar || readOnly,
-                enabled: enable ?? true,
-                validator: validator,
-                maxLength: maxLength,
-                minLines: minLines,
-                autofocus: false,
-                onTap:
-                    fieldType == InputFieldType.calendar ? onSelectDate : null,
-                maxLines: minLines,
-                buildCounter: (context,
-                        {required currentLength,
-                        required isFocused,
-                        maxLength}) =>
-                    null,
-                onEditingComplete: onEditingComplete ??
-                    () => FocusScope.of(context).nextFocus(),
-                maxLengthEnforcement:
-                    maxLengthEnforcement ?? MaxLengthEnforcement.none,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.all(12),
-                  counterText: counterText,
-                  isDense: true,
-                  filled: true,
-                  prefixIcon: prefix,
-                  suffixIcon: _buildSuffixIcon(isObscured),
-                  hintText: hint,
-                  fillColor: bgColor,
-                  hintStyle: style,
-                  errorMaxLines: 5,
-                ),
-                keyboardType: keyboardType,
-                onChanged: onChanged,
-                inputFormatters: inputFormatters,
-              );
-            }),
+        TextFormField(
+          textCapitalization: textCapitalization,
+          controller: controller,
+          textAlignVertical: TextAlignVertical.center,
+          style: inputStyle,
+          obscureText: isHideContent ?? false,
+          enabled: enable ?? true,
+          validator: validator,
+          maxLength: maxLength,
+          minLines: minLines,
+          autofocus: false,
+          maxLines: minLines,
+          buildCounter: (context,
+                  {required currentLength, required isFocused, maxLength}) =>
+              null,
+          onEditingComplete:
+              onEditingComplete ?? () => FocusScope.of(context).nextFocus(),
+          maxLengthEnforcement:
+              maxLengthEnforcement ?? MaxLengthEnforcement.none,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.all(12),
+            counterText: counterText,
+            isDense: true,
+            filled: true,
+            prefixIcon: prefix,
+            suffixIcon: suffix,
+            hintText: hint,
+            fillColor: bgColor,
+            hintStyle: style,
+            errorMaxLines: 5,
+          ),
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          inputFormatters: inputFormatters,
+        ),
       ],
     );
-  }
-
-  // Xử lý hiển thị suffix icon tùy vào loại TextField
-  Widget? _buildSuffixIcon(bool isObscured) {
-    if (fieldType == InputFieldType.password) {
-      return IconButton(
-        icon: Icon(isObscured
-            ? Icons.visibility_off_outlined
-            : Icons.visibility_outlined),
-        onPressed: () => isObscureNotifier.value = !isObscured,
-      );
-    }
-    if (fieldType == InputFieldType.calendar) {
-      return const Icon(Icons.calendar_today);
-    }
-    return suffix;
   }
 }
 

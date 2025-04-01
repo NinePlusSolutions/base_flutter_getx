@@ -246,12 +246,8 @@ Select environment and run app with [Visual Studio Code](https://docs.flutter.de
 ↳ **Language**
 
 1. Crete new key inside [en_US](lib/lang/en_US.dart) and [vi_VN](lib/lang/vi_VN.dart)
-2. Run command: 
-  ```bash
-    dart lib/lang/generate_app_keys.dart    
-  ```
-3. Basic call: *your-key*.tr
-4. Call with params
+2. Basic call: *your-key*.tr
+3. Call with params
 ```dart
    // en_US.dart
    "hello": "Hello, my name is @name"

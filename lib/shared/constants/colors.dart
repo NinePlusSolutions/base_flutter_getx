@@ -17,8 +17,8 @@ class ColorConstants {
   static const Color white = Color(0xFFFFFFFF);
 
   // Highlight Colors
-  static const Color highlightPrimary = Color(0xFF349A13);
-  static const Color highlightSecondary = Color(0xFFFFA84A);
+  static const Color highlightPrimary = Color(0xFF006FFD);
+  static const Color highlightSecondary = Color(0xFF2897FF);
   static const Color highlightTertiary = Color(0xFF6FBAFF);
   static const Color highlightQuaternary = Color(0xFFB4DBFF);
   static const Color highlightQuintary = Color(0xFFEAF2FF);
@@ -41,7 +41,6 @@ class ColorConstants {
   static const Color supportSuccessPrimary = Color(0xFF298267);
   static const Color supportSuccessSecondary = Color(0xFF3AC0A0);
   static const Color supportSuccessTertiary = Color(0xFFE7F4E8);
-  static const Color supportCardBackground = Color(0xFFE4E4E4);
 
   static const Color supportWarningPrimary = Color(0xFFE86339);
   static const Color supportWarningSecondary = Color(0xFFFFB37C);
@@ -58,7 +57,7 @@ const darkColorScheme = ColorScheme(
   onPrimary: ColorConstants.neutralDarkPrimary,
   surface: ColorConstants.neutralDarkSecondary,
   primaryContainer: ColorConstants.highlightSecondary,
-  onPrimaryContainer: ColorConstants.neutralDarkPrimary,
+  onPrimaryContainer: ColorConstants.white,
   secondary: ColorConstants.highlightQuaternary,
   onSecondary: ColorConstants.neutralDarkPrimary,
   secondaryContainer: ColorConstants.highlightPrimary,

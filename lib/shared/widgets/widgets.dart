@@ -11,5 +11,3 @@ export 'common/space.dart';
 export 'shimmer/shimmer_widget.dart';
 export 'shimmer/page_loading.dart';
 export 'shimmer/shimmer_container.dart';
-
-export 'dialog/common_dialog.dart';

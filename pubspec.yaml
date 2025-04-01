@@ -26,18 +26,6 @@ dependencies:
   intl: ^0.20.1
   path_provider: ^2.1.5
   flutter_dotenv: ^5.2.1
-  image_picker: ^1.1.2
-  fl_chart: ^0.65.0
-  device_info_plus: ^9.1.2
-  json_annotation: ^4.8.1
-  flutter_html: ^3.0.0
-  url_launcher: ^6.3.1
-  requests_inspector: ^4.2.1
-  # Handle FCM
-#  firebase_messaging: ^15.0.4
-#  firebase_core: ^3.0.0
-#  flutter_local_notifications: ^17.2.3
-#  firebase_crashlytics: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -69,10 +57,10 @@ flavorizr:
   flavors:
     dev:
       app:
-        name: "[DEV] ERP App"
+        name: "[DEV] Flutter GetX" # replace with your app name
       android:
         applicationId: "com.pixel.baseapp.dev"
-        icon: "assets/system/logo_circle.png"
+        icon: "assets/system/logo_circle.png" # replace with your icon path
         
         # optional, if you want to use firebase
         # firebase:
@@ -80,31 +68,29 @@ flavorizr:
   
       ios:
         bundleId: "com.pixel.baseapp.dev"
-        icon: "assets/system/logo_circle.png"
+        icon: "assets/system/logo_circle.png"  # replace with your icon path
         # optional, if you want to use firebase
         # firebase:
         #   config: ".firebase/apple/GoogleService-Info-dev.json"
   
     prod:
       app:
-        name: "ERP App" # replace with your app name
+        name: "Flutter GetX" # replace with your app name
       android:
           applicationId: "com.pixel.baseapp"
-          icon: "assets/system/logo_circle.png"
+          icon: "assets/system/logo_circle.png" # replace with your icon path
       ios:
           bundleId: "com.pixel.baseapp"
-          icon: "assets/system/logo_circle.png"
+          icon: "assets/system/logo_circle.png" # replace with your icon path
 
 # config you app native splash screen
 # for more details see https://pub.dev/packages/flutter_native_splash
 flutter_native_splash:
-  color: "#ffffff"
-  # TODO: Uncomment this for dark background
-  #color_dark: "#042a49"
-  image: "assets/system/splash_image.png"
+  color: "#ffff"
+  image: "assets/system/logo_circle.png" # replace with your splash screen image path
 
   android_12:
-    image: "assets/system/splash_image.png"
-    color: "#ffffff"
-  web: false
-  ios: true
+    image: "assets/system/logo_circle.png" # replace with your splash screen image path
+    icon_background_color: "#ffffff" # replace with your background color
+
+  ios: true          

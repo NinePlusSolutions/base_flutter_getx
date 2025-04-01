@@ -1,10 +1,5 @@
-import 'package:flutter_getx_boilerplate/modules/bottom_naviagte/bottom_navigate.dart';
 import 'package:flutter_getx_boilerplate/modules/home/home.dart';
 import 'package:flutter_getx_boilerplate/modules/modules.dart';
-import 'package:flutter_getx_boilerplate/modules/notification/notification_binding.dart';
-import 'package:flutter_getx_boilerplate/modules/notification/notification_screen.dart';
-import 'package:flutter_getx_boilerplate/modules/profile/binding/profile_details_binding.dart';
-import 'package:flutter_getx_boilerplate/modules/profile/export/profile.dart';
 import 'package:get/get.dart';
 
 part 'app_routes.dart';
@@ -30,23 +25,8 @@ class AppPages {
     ),
     GetPage(
       name: Routes.home,
-      page: () => HomeScreen(),
+      page: () => const HomeScreen(),
       binding: HomeBinding(),
     ),
-    GetPage(
-      name: Routes.navigator,
-      page: () => BottomNavScreen(),
-      binding: BottomNavigateBinding(),
-    ),
-    GetPage(
-      name: Routes.profile,
-      page: () => const ProfileDetailsScreen(),
-      binding: ProfileDetailsBinding(),
-    ),
-    GetPage(
-        name: Routes.notification,
-        page: () => const NotificationScreen(),
-        binding: NotificationBinding(),
-    )
   ];
 }

@@ -5,7 +5,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_getx_boilerplate/di.dart';
 import 'package:flutter_getx_boilerplate/shared/enum/flavors_enum.dart';
 import 'package:flutter_getx_boilerplate/shared/constants/colors.dart';
-import 'package:requests_inspector/requests_inspector.dart';
 import 'app.dart';
 
 FutureOr<void> main() async {
@@ -14,7 +13,7 @@ FutureOr<void> main() async {
   // await dotenv.load(fileName: fileName);
   await DependencyInjection.init();
 
-  runApp(const RequestsInspector(child: App()));
+  runApp(const App());
 
   configLoading();
 }
