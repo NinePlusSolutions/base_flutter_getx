@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/routes/navigator_helper.dart';
-import 'package:flutter_getx_boilerplate/shared/services/services.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 

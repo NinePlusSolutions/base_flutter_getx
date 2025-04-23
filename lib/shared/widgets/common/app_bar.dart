@@ -71,8 +71,8 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           },
           child: Container(
             alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 12),
+            child: const Padding(
+              padding: EdgeInsets.only(left: 12),
               // child: ImageWidget(
               //   ImageConstant.iconArrowBack,
               //   width: 24,

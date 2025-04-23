@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 abstract class MsgBox extends StatelessWidget {
   final AnimationController animationController;
 
-  const MsgBox({Key? key, required this.animationController}) : super(key: key);
+  const MsgBox({super.key, required this.animationController});
 
   @override
   Widget build(BuildContext context) {

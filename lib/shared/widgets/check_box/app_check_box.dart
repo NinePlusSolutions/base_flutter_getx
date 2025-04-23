@@ -1,13 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../shared.dart';
 
 class AppCheckbox extends StatefulWidget {
   final String? label;
   final bool? checked;
   final Function(bool?)? onChecked;
 
-  AppCheckbox({this.label, this.checked, this.onChecked});
+  const AppCheckbox({super.key, this.label, this.checked, this.onChecked});
 
   @override
   _AppCheckboxState createState() => _AppCheckboxState();
@@ -17,9 +17,11 @@ class _AppCheckboxState extends State<AppCheckbox> {
   bool? _checked = false;
 
   void _onChecked(bool? checked) {
-    print(checked);
+    if (kDebugMode) {
+      print(checked);
+    }
     setState(() {
-      this._checked = checked;
+      _checked = checked;
     });
 
     if (widget.onChecked != null) {
@@ -45,7 +47,7 @@ class _AppCheckboxState extends State<AppCheckbox> {
             child: Text(
               widget.label!,
               textAlign: TextAlign.left,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13.0,
                 color: Colors.white,
               ),

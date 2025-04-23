@@ -1,4 +1,4 @@
-export 'app_check_box.dart';
+export 'check_box/app_check_box.dart';
 
 export 'input/input_field.dart';
 export 'msg/send_msg_box.dart';

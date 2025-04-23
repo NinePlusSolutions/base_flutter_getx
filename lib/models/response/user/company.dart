@@ -1,3 +1,4 @@
+// ignore: depend_on_referenced_packages
 import 'package:json_annotation/json_annotation.dart';
 
 import 'address.dart';
@@ -33,6 +34,5 @@ class Company {
     );
   }
 
-  @override
   List<Object?> get props => [department, name, title, address];
 }

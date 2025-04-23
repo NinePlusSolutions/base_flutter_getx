@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter_getx_boilerplate/api/interceptor.dart';
-import 'package:flutter_getx_boilerplate/flavors.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/flavors_enum.dart';
 import 'package:get/get.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 import 'package:flutter_getx_boilerplate/routes/navigator_helper.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/image/image_widget.dart';
@@ -30,7 +31,7 @@ class _OnboardScreenState extends State<OnboardScreen> {
           Expanded(
             child: PageView(
               controller: _pageController,
-              children: [
+              children: const [
                 OnboardPage(
                   image:
                       'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',

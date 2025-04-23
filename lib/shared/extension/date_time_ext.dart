@@ -6,8 +6,10 @@ class PatternConstants {
   static const String ddMMYYYY = 'dd/MM/yyyy';
   static const String ddMMYYYYHmm = 'dd/MM/yyyy HH:mm';
   static const String hhMmDDYYYY = 'HH:mm dd/MM/yyyy';
+  // ignore: constant_identifier_names
   static const String HHmm = 'HH:mm';
 
+  // ignore: constant_identifier_names
   static const String UTC = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 }
 
@@ -24,10 +26,7 @@ extension DateTimeExt on DateTime {
   }
 
   String format(String? pattern) {
-    final pat = pattern ?? PatternConstants.ddMMYYYY;
-    final utcDate = DateTime.parse(toLocal);
-
-    return DateFormat(pattern).format(utcDate);
+    return DateFormat(pattern).format(DateTime.parse(toLocal));
   }
 
   /// Compare date with current date is after now
@@ -37,7 +36,7 @@ extension DateTimeExt on DateTime {
   /// DateTimeUtils.isDateAfter(DateTime(2021, 10, 17), 8); // false
   bool isDateBeforeDay(int count) {
     final now = DateTime.now();
-    final diff = this.difference(now).inDays;
+    final diff = difference(now).inDays;
 
     return diff < count;
   }

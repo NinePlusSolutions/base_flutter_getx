@@ -1,5 +1,6 @@
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 
 class StorageService {
   static SharedPreferences? _sharedPreferences;
@@ -15,10 +16,11 @@ class StorageService {
   /// 0: System
   /// 1: Light
   /// 2: Dark
-  static int get themeMode =>
-      _sharedPreferences?.getInt(StorageConstants.themeMode) ?? 0;
-  static set themeMode(int value) =>
-      _sharedPreferences?.setInt(StorageConstants.themeMode, value);
+  static AppThemeMode get themeModeStorage =>
+      AppThemeMode.fromInt(_sharedPreferences?.getInt(StorageConstants.themeMode) ?? AppThemeMode.light.index);
+
+  static set themeModeStorage(AppThemeMode value) =>
+      _sharedPreferences?.setInt(StorageConstants.themeMode, value.index);
 
   static String? get token =>
       _sharedPreferences?.getString(StorageConstants.token);

@@ -1,3 +1,4 @@
+// ignore: depend_on_referenced_packages
 import 'package:json_annotation/json_annotation.dart';
 
 import 'address.dart';
@@ -136,7 +137,6 @@ class User {
     );
   }
 
-  @override
   List<Object?> get props {
     return [
       id,

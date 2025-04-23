@@ -1,3 +1,3 @@
 class R {
-  static final String assetsTODO = '';
+  static const String assetsTODO = '';
 }

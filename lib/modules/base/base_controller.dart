@@ -29,10 +29,6 @@ abstract class BaseController<T> extends GetxController {
 
   final isInitialized = false.obs;
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
 
   @override
   void onReady() {

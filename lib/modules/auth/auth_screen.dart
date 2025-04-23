@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/auth/auth_controller.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:get/get.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 
 class AuthScreen extends GetView<AuthController> {
   const AuthScreen({super.key});
@@ -101,25 +102,26 @@ class AuthScreen extends GetView<AuthController> {
   }
 
   Positioned _buildThemeButton() {
-    const darkIcon = Icon(
-      Icons.dark_mode,
-      color: Colors.black,
-    );
-
-    const lightIcon = Icon(
-      Icons.light_mode,
-      color: Colors.white,
-    );
-
     return Positioned(
       top: 40,
       left: 16,
-      child: IconButton(
-        onPressed: controller.onChangeTheme,
-        icon: Obx(
-          () => !controller.isDarkMode.value ? darkIcon : lightIcon,
-        ),
-      ),
+      child: Obx(() => PopupMenuButton<AppThemeMode>(
+        icon: Icon(controller.themeMode.value.icon),
+        onSelected: (mode) => controller.onChangeTheme(mode),
+        itemBuilder: (context) => AppThemeMode.values.map((mode) {
+          return PopupMenuItem(
+            value: mode,
+            child: Row(
+              children: [
+                Icon(mode.icon, color: context.colors.primary),
+                const SizedBox(width: 8),
+                Text(mode.name.capitalizeFirst ?? ""),
+              ],
+            ),
+          );
+        }).toList(),
+      )),
     );
   }
+
 }

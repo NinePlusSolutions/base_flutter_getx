@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 import 'package:flutter_getx_boilerplate/shared/constants/theme.dart';
 import 'package:flutter_getx_boilerplate/shared/extension/context_ext.dart';
 
@@ -89,4 +90,3 @@ class ButtonWidget extends StatelessWidget {
   }
 }
 
-enum ButtonType { primary, outline, text }

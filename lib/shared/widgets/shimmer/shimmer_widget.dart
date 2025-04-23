@@ -3,8 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class _ImageShimmer extends StatelessWidget {
-  _ImageShimmer({
-    super.key,
+  const _ImageShimmer({
     this.width,
     this.height,
     this.shape,
