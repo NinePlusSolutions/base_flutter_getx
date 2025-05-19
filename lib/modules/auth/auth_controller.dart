@@ -1,18 +1,20 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/base/base_controller.dart';
-import 'package:flutter_getx_boilerplate/models/request/login_request.dart';
 import 'package:flutter_getx_boilerplate/models/response/error/error_response.dart';
 import 'package:flutter_getx_boilerplate/repositories/auth_repository.dart';
 import 'package:flutter_getx_boilerplate/routes/navigator_helper.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 
+import '../../repositories/ttlock_repository.dart';
+
 class AuthController extends BaseController<AuthRepository> {
+  final TTLockRepository ttlockRepository = Get.find<TTLockRepository>();
   AuthController(super.repository);
 
-  final emailController = TextEditingController(text: "emilys");
-  final passwordController = TextEditingController(text: "emilyspass");
+  final emailController = TextEditingController(text: "phuc.dcv@nineplus.vn");
+  final passwordController = TextEditingController(text: "Abc123!@#");
 
   final formKey = GlobalKey<FormState>();
 
@@ -24,31 +26,45 @@ class AuthController extends BaseController<AuthRepository> {
     themeMode.value = StorageService.themeModeStorage;
   }
 
+  void checkTTLockAuthentication() async {
+    try {
+      final isAuthenticated = await ttlockRepository.isAuthenticated();
+      if (isAuthenticated) {
+        NavigatorHelper.toHome();
+      }
+    } catch (e) {
+      // Not authenticated - stay on login screen
+    }
+  }
+
   onLogin() async {
     if (formKey.currentState?.validate() != true) {
       showError("Error", "fill_correct_info".tr);
-
       return;
     }
 
     setLoading(true);
+
     try {
-      final request = LoginRequest(
-        username: emailController.text,
-        password: passwordController.text,
-        expiresInMins: 1,
-      );
-      final res = await repository.login(request);
-      if (res.accessToken != null) {
-        StorageService.token = res.accessToken!;
-        NavigatorHelper.toHome();
-      } else {
-        // showError("login_failed".tr,res. )
-      }
+      await loginWithTTLock();
+      NavigatorHelper.toHome();
     } on ErrorResponse catch (e) {
       showError("login_failed".tr, e.message);
+    } catch (e) {
+      showError("login_failed".tr, e.toString());
     } finally {
       setLoading(false);
+    }
+  }
+
+  Future<void> loginWithTTLock() async {
+    final username = emailController.text;
+    final password = passwordController.text;
+
+    final response = await ttlockRepository.login(username, password);
+    if (response.accessToken.isNotEmpty) {
+    } else {
+      throw ErrorResponse(message: 'ttlock_login_failed'.tr);
     }
   }
 

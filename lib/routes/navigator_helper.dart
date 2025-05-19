@@ -17,4 +17,8 @@ class NavigatorHelper {
   static toHome() {
     return Get.offNamed(Routes.home);
   }
+
+  static toLock() {
+    return Get.toNamed(Routes.lock);
+  }
 }

@@ -5,4 +5,7 @@ class StorageConstants {
   static const String locale = 'locale';
   static const String firstInstall = 'firstInstall';
   static const String lang = 'lang';
+
+  static const String ttlockToken = 'ttlock_token';
+  static const String ttlockUsername = 'ttlock_username';
 }

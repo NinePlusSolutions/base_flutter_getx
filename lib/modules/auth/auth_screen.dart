@@ -10,7 +10,6 @@ class AuthScreen extends GetView<AuthController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // resizeToAvoidBottomInset: false,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -20,7 +19,7 @@ class AuthScreen extends GetView<AuthController> {
                   height: 50.hp,
                   width: 100.wp,
                   decoration: BoxDecoration(
-                    color: context.colors.primary.withOpacity(.2),
+                    color: context.colors.primary.withValues(alpha: .2),
                   ),
                   child: const Center(
                     child: Icon(Icons.image),
@@ -106,22 +105,21 @@ class AuthScreen extends GetView<AuthController> {
       top: 40,
       left: 16,
       child: Obx(() => PopupMenuButton<AppThemeMode>(
-        icon: Icon(controller.themeMode.value.icon),
-        onSelected: (mode) => controller.onChangeTheme(mode),
-        itemBuilder: (context) => AppThemeMode.values.map((mode) {
-          return PopupMenuItem(
-            value: mode,
-            child: Row(
-              children: [
-                Icon(mode.icon, color: context.colors.primary),
-                const SizedBox(width: 8),
-                Text(mode.name.capitalizeFirst ?? ""),
-              ],
-            ),
-          );
-        }).toList(),
-      )),
+            icon: Icon(controller.themeMode.value.icon),
+            onSelected: (mode) => controller.onChangeTheme(mode),
+            itemBuilder: (context) => AppThemeMode.values.map((mode) {
+              return PopupMenuItem(
+                value: mode,
+                child: Row(
+                  children: [
+                    Icon(mode.icon, color: context.colors.primary),
+                    const SizedBox(width: 8),
+                    Text(mode.name.capitalizeFirst ?? ""),
+                  ],
+                ),
+              );
+            }).toList(),
+          )),
     );
   }
-
 }

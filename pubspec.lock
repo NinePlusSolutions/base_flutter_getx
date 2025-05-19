@@ -54,6 +54,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.12.0"
+  bmprogresshud:
+    dependency: "direct main"
+    description:
+      name: bmprogresshud
+      sha256: "99e571e1f9d9b11e9f404cec67df051c0b1a5bccb4578fd3f4f71dc749b0544c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
   boolean_selector:
     dependency: transitive
     description:
@@ -183,7 +191,7 @@ packages:
     source: hosted
     version: "4.10.1"
   collection:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: collection
       sha256: "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
@@ -199,7 +207,7 @@ packages:
     source: hosted
     version: "3.1.2"
   crypto:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: crypto
       sha256: ec30d999af904f33454ba22ed9a86162b35e52b44ac4807d1d93c288041d7d27
@@ -470,7 +478,7 @@ packages:
     source: hosted
     version: "0.7.1"
   json_annotation:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: json_annotation
       sha256: "1ce844379ca14835a50d2f019a3099f419082cfdd231cd86a142af94dd5c6bb1"
@@ -906,6 +914,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  ttlock_flutter:
+    dependency: "direct main"
+    description:
+      name: ttlock_flutter
+      sha256: "45ae5fc3fdc8fc94f6e8c1357a48bd7989466a23467f43f159d5253d1be8243e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.7"
   typed_data:
     dependency: transitive
     description:

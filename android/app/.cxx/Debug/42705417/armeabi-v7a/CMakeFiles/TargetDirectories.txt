@@ -1,0 +1,2 @@
+/Users/pixeldeveloper/Documents/workingspace/mobile-apps/base_flutter_getx/android/app/.cxx/Debug/42705417/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/pixeldeveloper/Documents/workingspace/mobile-apps/base_flutter_getx/android/app/.cxx/Debug/42705417/armeabi-v7a/CMakeFiles/rebuild_cache.dir
