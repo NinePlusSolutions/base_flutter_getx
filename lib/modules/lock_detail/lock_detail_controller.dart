@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_detail_response.dart';
+import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_item_response.dart';
 import 'package:flutter_getx_boilerplate/repositories/ttlock_repository.dart';
 import 'package:get/get.dart';
 import 'package:ttlock_flutter/ttlock.dart';
@@ -9,21 +10,11 @@ import '../../models/response/error/error_response.dart';
 import '../../shared/utils/logger.dart';
 import '../base/base_controller.dart';
 
-enum LockConnectionState {
-  disconnected,
-  connecting,
-  connected,
-  disconnecting,
-  error,
-}
-
 class LockDetailController extends BaseController<TTLockRepository> {
-  final Rx<Map<String, dynamic>> lockInfo = Rx<Map<String, dynamic>>({});
+  TTLockInitializedItem? lockInfo;
 
   final batteryLevel = 0.obs;
   final remoteControlState = false.obs;
-
-  final isInitializing = false.obs;
 
   final isRemoteActionInProgress = false.obs;
   final remoteAction = ''.obs;
@@ -32,11 +23,8 @@ class LockDetailController extends BaseController<TTLockRepository> {
   final isRemoteUnlockSettingInProgress = false.obs;
   final hasRemoteUnlockFeature = false.obs;
 
-  String? eKey;
-
+  TTLockDetailResponse? lockDetail;
   String? lockData;
-  String? lockMac;
-  String? lockVersion;
 
   LockDetailController(super.repository);
 
@@ -44,68 +32,47 @@ class LockDetailController extends BaseController<TTLockRepository> {
   void onInit() {
     super.onInit();
 
-    if (Get.arguments != null && Get.arguments is Map<String, dynamic>) {
-      lockInfo.value = Get.arguments;
+    if (Get.arguments != null && Get.arguments is TTLockInitializedItem) {
+      lockInfo = Get.arguments;
+      lockData = lockInfo?.lockData;
 
-      lockMac = lockInfo.value['lockMac'];
-      lockVersion = lockInfo.value['lockVersion'];
-      lockData = lockInfo.value['lockData'];
-      final bool hasLockId = lockInfo.value['lockId'] != null;
-
-      if (lockInfo.value['electricQuantity'] != null) {
-        batteryLevel.value = lockInfo.value['electricQuantity'];
-      }
-
-      AppLogger.i(
-        'Initializing lock controller: hasLockId=$hasLockId, hasGateway=${lockInfo.value['hasGateway']}',
-      );
-
-      if (hasLockId && lockInfo.value['hasGateway'] == true) {
-        Future.delayed(const Duration(milliseconds: 300), () async {
-          getLockOpenState();
-          getLockDetail();
-          await fetchLockDataFromAPI();
-          getLockRemoteUnlockSwitchState();
-        });
-      }
+      Future.delayed(const Duration(milliseconds: 300), () async {
+        getLockOpenState();
+        await getLockDetail();
+        // await fetchLockDataFromAPI();
+        getLockRemoteUnlockSwitchState();
+      });
     }
   }
 
-  Future<void> fetchLockDataFromAPI() async {
-    if (lockInfo.value['lockId'] == null) {
-      AppLogger.i('Cannot fetch lockData from API: Lock ID not available');
-      return;
-    }
+  // Future<void> fetchLockDataFromAPI() async {
+  //   if (lockInfo?.lockId == null) {
+  //     AppLogger.i('Cannot fetch lockData from API: Lock ID not available');
+  //     return;
+  //   }
 
-    try {
-      AppLogger.i('Fetching lockData from API for lock ID: ${lockInfo.value['lockId']}');
+  //   try {
+  //     AppLogger.i('Fetching lockData from API for lock ID: ${lockInfo?.lockId}');
 
-      isRemoteActionInProgress.value = true;
-      remoteAction.value = 'setup';
+  //     isRemoteActionInProgress.value = true;
+  //     remoteAction.value = 'setup';
 
-      final lockId = lockInfo.value['lockId'];
-      final response = await repository.getEKey(lockId);
-
-      if (response.containsKey('lockData') && response['lockData'] != null) {
-        lockData = response['lockData'];
-        AppLogger.i('LockData fetched successfully from API: $lockData');
-      } else {
-        AppLogger.e('API response does not contain lockData');
-      }
-    } catch (e) {
-      if (e is ErrorResponse) {
-        AppLogger.e('LockData fetch failed with error: ${e.message}');
-      } else {
-        AppLogger.e('LockData fetch failed with exception: ${e.runtimeType} - $e');
-      }
-    } finally {
-      isRemoteActionInProgress.value = false;
-      remoteAction.value = '';
-    }
-  }
+  //     final lockId = lockInfo?.lockId ?? 0;
+  //     final response = await repository.getEKey(lockId);
+  //   } catch (e) {
+  //     if (e is ErrorResponse) {
+  //       AppLogger.e('LockData fetch failed with error: ${e.message}');
+  //     } else {
+  //       AppLogger.e('LockData fetch failed with exception: ${e.runtimeType} - $e');
+  //     }
+  //   } finally {
+  //     isRemoteActionInProgress.value = false;
+  //     remoteAction.value = '';
+  //   }
+  // }
 
   Future<void> getLockDetail() async {
-    if (lockInfo.value['lockId'] == null) {
+    if (lockInfo?.lockId == null) {
       AppLogger.i('Cannot fetch lock detail: Lock ID not available');
       return;
     }
@@ -114,27 +81,12 @@ class LockDetailController extends BaseController<TTLockRepository> {
       isRemoteActionInProgress.value = true;
       remoteAction.value = 'setup';
 
-      AppLogger.i('Fetching lock details for ID: ${lockInfo.value['lockId']}');
+      AppLogger.i('Fetching lock details for ID: ${lockInfo?.lockId}');
 
-      final lockDetail = await repository.getLockDetail(lockInfo.value['lockId']);
+      final res = await repository.getLockDetail(lockInfo?.lockId ?? 0);
+      lockDetail = res;
 
-      lockInfo.value = {
-        ...lockInfo.value,
-        'lockMac': lockDetail.lockMac,
-        'lockVersion': lockDetail.hardwareRevision,
-        'lockName': lockDetail.lockName,
-        'lockAlias': lockDetail.lockAlias,
-        'hasGateway': lockDetail.hasGateway,
-        'electricQuantity': lockDetail.electricQuantity,
-        'featureValue': lockDetail.featureValue,
-        'isInited': true,
-      };
-
-      lockMac = lockDetail.lockMac;
-      lockVersion = lockDetail.hardwareRevision;
-      batteryLevel.value = lockDetail.electricQuantity;
-
-      AppLogger.i('Lock detail fetched successfully. MAC: $lockMac, Version: $lockVersion');
+      batteryLevel.value = res.electricQuantity;
     } catch (e) {
       String errorMessage = 'Failed to fetch lock details';
       if (e is ErrorResponse) {
@@ -155,7 +107,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
   }
 
   Future<void> getLockOpenState({bool showLoadingIndicator = true}) async {
-    if (lockInfo.value['lockId'] == null) {
+    if (lockInfo?.lockId == null) {
       AppLogger.i('Cannot query lock state: Lock ID not available');
       return;
     }
@@ -168,9 +120,9 @@ class LockDetailController extends BaseController<TTLockRepository> {
     }
 
     try {
-      AppLogger.i('Querying lock state for ID: ${lockInfo.value['lockId']}');
+      AppLogger.i('Querying lock state for ID: ${lockInfo?.lockId}');
 
-      final response = await repository.queryLockOpenState(lockInfo.value['lockId']);
+      final response = await repository.queryLockOpenState(lockInfo?.lockId ?? 0);
       if (response.containsKey('state')) {
         final int state = response['state'];
         remoteLockState.value = state;
@@ -202,56 +154,6 @@ class LockDetailController extends BaseController<TTLockRepository> {
     }
   }
 
-  Future<void> initializeLockWithAccount(String lockAlias) async {
-    if (lockData == null) {
-      showError(
-        'Error',
-        'No lock data available to initialize',
-      );
-      return;
-    }
-
-    isInitializing.value = true;
-    AppLogger.i('Initializing lock with alias: $lockAlias');
-
-    try {
-      final response = await repository.initializeLock(
-        lockData: lockData!,
-        lockAlias: lockAlias,
-      );
-
-      AppLogger.i('Lock initialized successfully: ${response.lockId}, keyId: ${response.keyId}');
-
-      lockInfo.value = {
-        ...lockInfo.value,
-        'isInited': true,
-        'lockId': response.lockId,
-        'lockAlias': lockAlias,
-      };
-
-      isInitializing.value = false;
-
-      showSuccess(
-        'Success',
-        'Lock successfully initialized and added to your account',
-      );
-    } catch (e) {
-      isInitializing.value = false;
-
-      String errorMessage = 'Failed to initialize lock';
-      if (e is ErrorResponse) {
-        errorMessage = e.message;
-      }
-
-      AppLogger.e('Lock initialization failed: $e');
-
-      showError(
-        'Initialization Failed',
-        errorMessage,
-      );
-    }
-  }
-
   void getLockRemoteUnlockSwitchState() {
     if (lockData == null) {
       AppLogger.i('Cannot get remote unlock state: Lock not connected');
@@ -265,7 +167,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
     isRemoteUnlockSettingInProgress.value = true;
     AppLogger.i('Getting remote unlock switch state');
 
-    TTLock.getLockRemoteUnlockSwitchState(lockData!, (isOn) {
+    TTLock.getLockRemoteUnlockSwitchState(lockData ?? '', (isOn) {
       AppLogger.i('Remote unlock state retrieved: $isOn');
       remoteControlState.value = isOn;
       isRemoteUnlockSettingInProgress.value = false;
@@ -281,7 +183,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
   }
 
   Future<void> remoteUnlock() async {
-    if (lockInfo.value['lockId'] == null) {
+    if (lockInfo?.lockId == null) {
       showError(
         'Unlock Error',
         'Cannot perform remote unlock: Lock ID not available',
@@ -293,9 +195,9 @@ class LockDetailController extends BaseController<TTLockRepository> {
     remoteAction.value = 'unlock';
 
     try {
-      AppLogger.i('Starting remote unlock for lock ID: ${lockInfo.value['lockId']}');
+      AppLogger.i('Starting remote unlock for lock ID: ${lockInfo?.lockId}');
       final response = await repository.remoteControlLock(
-        lockId: lockInfo.value['lockId'],
+        lockId: lockInfo?.lockId ?? 0,
         controlAction: 'unlock',
       );
 
@@ -326,7 +228,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
   }
 
   Future<void> remoteLock() async {
-    if (lockInfo.value['lockId'] == null) {
+    if (lockInfo?.lockId == null) {
       showError(
         'Error',
         'Cannot perform remote lock: Lock ID not available',
@@ -338,9 +240,9 @@ class LockDetailController extends BaseController<TTLockRepository> {
     remoteAction.value = 'lock';
 
     try {
-      AppLogger.i('Starting remote lock for lock ID: ${lockInfo.value['lockId']}');
+      AppLogger.i('Starting remote lock for lock ID: ${lockInfo?.lockId}');
       final response = await repository.remoteControlLock(
-        lockId: lockInfo.value['lockId'],
+        lockId: lockInfo?.lockId ?? 0,
         controlAction: 'lock',
       );
 
@@ -376,7 +278,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
   }
 
   Future<void> deleteLock() async {
-    if (lockInfo.value['lockId'] == null) {
+    if (lockInfo?.lockId == null) {
       showError(
         'Error',
         'Cannot delete lock: Lock ID not available',
@@ -388,7 +290,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
     remoteAction.value = 'delete';
 
     try {
-      final lockId = lockInfo.value['lockId'];
+      final lockId = lockInfo?.lockId ?? 0;
 
       AppLogger.i('Initiating lock deletion for ID: $lockId');
 
@@ -440,7 +342,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
     final completer = Completer<void>();
 
-    TTLock.resetLock(lockData!, () {
+    TTLock.resetLock(lockData ?? '', () {
       AppLogger.i('Lock reset successful before deletion');
       completer.complete();
     }, (errorCode, errorMsg) {
@@ -449,82 +351,6 @@ class LockDetailController extends BaseController<TTLockRepository> {
     });
 
     return completer.future;
-  }
-
-  void initLock() {
-    final Map<String, String> lockParams = {
-      'lockMac': lockMac!,
-      'lockVersion': lockVersion!,
-    };
-
-    TTLock.initLock(lockParams, (lockDataResult) {
-      AppLogger.i('Connected to lock successfully');
-      lockData = lockDataResult;
-      getLockPower(lockDataResult);
-      getLockRemoteUnlockSwitchState();
-      _showInitializationDialog();
-    }, (errorCode, errorMsg) {
-      AppLogger.e('Lock connection failed: $errorCode - $errorMsg');
-      if (errorMsg.toLowerCase().contains('none setting mode')) {
-        showError(
-          'Connection Failed',
-          'This lock appears to be already initialized. Please use the associated account.',
-        );
-      } else {
-        showError(
-          'Connection Failed',
-          errorMsg,
-        );
-      }
-    });
-  }
-
-  void _showInitializationDialog() {
-    final TextEditingController nameController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Initialize Lock'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Please enter a name for your lock:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Lock Name',
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            child: const Text('Cancel'),
-            onPressed: () => Get.back(),
-          ),
-          TextButton(
-            child: const Text('Initialize'),
-            onPressed: () {
-              final String lockName = nameController.text.trim();
-              if (lockName.isEmpty) {
-                Get.snackbar(
-                  'Error',
-                  'Lock name cannot be empty',
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-                return;
-              }
-
-              Get.back();
-              initializeLockWithAccount(lockName);
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   void toggleRemoteUnlockSwitch() {
@@ -543,7 +369,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
     AppLogger.i('Setting remote unlock switch to: $newState');
 
-    TTLock.setLockRemoteUnlockSwitchState(newState, lockData!, (updatedLockData) {
+    TTLock.setLockRemoteUnlockSwitchState(newState, lockData ?? '', (updatedLockData) {
       remoteControlState.value = newState;
       isRemoteUnlockSettingInProgress.value = false;
 
@@ -596,18 +422,5 @@ class LockDetailController extends BaseController<TTLockRepository> {
       AppLogger.e('Lock failed: $errorCode - $errorMsg');
       showError('Lock Failed', 'Failed to lock: $errorMsg');
     });
-  }
-
-  void getLockPower(String lockData) {
-    TTLock.getLockPower(lockData, (electricQuantity) {
-      batteryLevel.value = electricQuantity;
-      AppLogger.i('Lock power level: $electricQuantity%');
-    }, (errorCode, errorMsg) {
-      AppLogger.e('Failed to get power');
-    });
-  }
-
-  bool get isLockInitialized {
-    return lockInfo.value['isInited'] == true || lockInfo.value['lockId'] != null;
   }
 }

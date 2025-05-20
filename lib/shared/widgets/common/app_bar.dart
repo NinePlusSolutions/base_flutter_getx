@@ -82,6 +82,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               // ),
               child: Icon(
                 Icons.arrow_back_ios,
+                color: Colors.white,
               ),
             ),
           ),

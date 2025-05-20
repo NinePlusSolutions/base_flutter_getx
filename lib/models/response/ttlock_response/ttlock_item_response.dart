@@ -4,7 +4,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'ttlock_item_response.g.dart';
 
 @JsonSerializable()
-class TTLockItem {
+class TTLockInitializedItem {
   final int lockId;
   final String lockName;
   final String lockAlias;
@@ -17,7 +17,7 @@ class TTLockItem {
   final String? groupName;
   final int date;
 
-  TTLockItem({
+  TTLockInitializedItem({
     required this.lockId,
     required this.lockName,
     required this.lockAlias,
@@ -31,14 +31,14 @@ class TTLockItem {
     required this.date,
   });
 
-  factory TTLockItem.fromJson(Map<String, dynamic> json) => _$TTLockItemFromJson(json);
+  factory TTLockInitializedItem.fromJson(Map<String, dynamic> json) => _$TTLockItemFromJson(json);
 
   Map<String, dynamic> toJson() => _$TTLockItemToJson(this);
 
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    if (other is! TTLockItem) return false;
+    if (other is! TTLockInitializedItem) return false;
     final mapEquals = const DeepCollectionEquality().equals;
     return mapEquals(other.toJson(), toJson());
   }

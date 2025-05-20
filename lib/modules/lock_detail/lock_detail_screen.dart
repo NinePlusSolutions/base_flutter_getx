@@ -19,7 +19,7 @@ class LockDetailScreen extends GetView<LockDetailController> {
   _buildAppbar(BuildContext context) {
     return AppBarWidget(
       backgroundColor: context.colors.primary,
-      title: controller.lockInfo.value['lockAlias'] ?? controller.lockInfo.value['lockName'],
+      title: controller.lockInfo?.lockAlias ?? controller.lockInfo?.lockName ?? 'Unknown',
       elevation: 2,
       actions: [
         _buildAction(context),
@@ -51,7 +51,7 @@ class LockDetailScreen extends GetView<LockDetailController> {
   }
 
   Widget _buildStatusCard(BuildContext context) {
-    final lockInfo = controller.lockInfo.value;
+    final lockInfo = controller.lockInfo;
 
     return Card(
       elevation: 4,
@@ -66,7 +66,7 @@ class LockDetailScreen extends GetView<LockDetailController> {
               children: [
                 Expanded(
                   child: Text(
-                    lockInfo['lockAlias'] ?? lockInfo['lockName'] ?? 'Smart Lock',
+                    lockInfo?.lockName ?? lockInfo?.lockAlias ?? 'Unknown',
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -98,7 +98,7 @@ class LockDetailScreen extends GetView<LockDetailController> {
               children: [
                 const Text('MAC Address:', style: TextStyle(fontSize: 14)),
                 Text(
-                  lockInfo['lockMac'] ?? 'N/A',
+                  lockInfo?.lockMac ?? 'N/A',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
               ],
@@ -110,55 +110,6 @@ class LockDetailScreen extends GetView<LockDetailController> {
   }
 
   Widget _buildLockControls(BuildContext context) {
-    final bool isInitialized = controller.isLockInitialized;
-
-    if (controller.isInitializing.value) {
-      return Container(
-        margin: const EdgeInsets.only(top: 32),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 20),
-              Text("Initializing lock..."),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (!isInitialized) {
-      return Column(
-        children: [
-          Container(
-            width: double.infinity,
-            height: 80,
-            margin: const EdgeInsets.only(bottom: 24),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              onPressed: () => controller.initLock(),
-              icon: const Icon(Icons.add_circle_outline, size: 32, color: Colors.white),
-              label: const Text(
-                'INITIALIZE LOCK',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
-            ),
-          ),
-          const Text(
-            'This lock needs to be initialized with your account before use',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      );
-    }
-
     return _buildRemoteControls(context);
   }
 
@@ -254,7 +205,6 @@ class LockDetailScreen extends GetView<LockDetailController> {
               ),
               const Divider(),
 
-              // Remote Unlock Setting
               Obx(() => ListTile(
                     leading: const Icon(Icons.router),
                     title: const Text('Remote Control'),
