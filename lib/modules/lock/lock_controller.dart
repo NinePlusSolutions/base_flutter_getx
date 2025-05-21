@@ -9,7 +9,7 @@ import '../../../models/response/ttlock_response/ttlock_item_response.dart';
 import '../../../shared/utils/logger.dart';
 import '../base/base_controller.dart';
 
-class LockListController extends BaseController<TTLockRepository> {
+class LockController extends BaseController<TTLockRepository> {
   final RxList<TTLockInitializedItem> initializedLocks = <TTLockInitializedItem>[].obs;
   final RxList<TTLockScanModel> scannedLocks = <TTLockScanModel>[].obs;
 
@@ -19,7 +19,7 @@ class LockListController extends BaseController<TTLockRepository> {
 
   final currentTab = 0.obs;
 
-  LockListController(super.repository);
+  LockController(super.repository);
 
   @override
   void onInit() {
@@ -162,15 +162,6 @@ class LockListController extends BaseController<TTLockRepository> {
     }
   }
 
-  void switchTab(int tabIndex) {
-    if (currentTab.value == tabIndex) return;
-
-    currentTab.value = tabIndex;
-    if (tabIndex == 0 && isScanning.value) {
-      stopScan();
-    }
-  }
-
   void onInitializedLockTap(TTLockInitializedItem lock) {
     stopScan();
     Get.toNamed(Routes.lock, arguments: lock);
@@ -178,48 +169,6 @@ class LockListController extends BaseController<TTLockRepository> {
 
   void onScannedLockTap(TTLockScanModel lock) {
     showInitializeLockDialog(lock);
-  }
-
-  void navigateToLockControl(dynamic lockInfo) {
-    stopScan();
-
-    Map<String, dynamic> lockData;
-    if (lockInfo is TTLockInitializedItem) {
-      lockData = {
-        'lockId': lockInfo.lockId,
-        'lockName': lockInfo.lockName,
-        'lockAlias': lockInfo.lockAlias,
-        'lockMac': lockInfo.lockMac,
-        'electricQuantity': lockInfo.electricQuantity,
-        'featureValue': lockInfo.featureValue,
-        'hasGateway': lockInfo.hasGateway,
-        'lockData': lockInfo.lockData,
-        'groupId': lockInfo.groupId,
-        'groupName': lockInfo.groupName,
-        'date': lockInfo.date,
-      };
-    } else if (lockInfo is TTLockScanModel) {
-      lockData = {
-        'lockName': lockInfo.lockName,
-        'lockMac': lockInfo.lockMac,
-        'isInited': lockInfo.isInited,
-        'isAllowUnlock': lockInfo.isAllowUnlock,
-        'electricQuantity': lockInfo.electricQuantity,
-        'lockVersion': lockInfo.lockVersion,
-        'lockSwitchState': lockInfo.lockSwitchState,
-        'rssi': lockInfo.rssi,
-        'oneMeterRssi': lockInfo.oneMeterRssi,
-        'timestamp': lockInfo.timestamp,
-      };
-    } else {
-      lockData = lockInfo;
-    }
-
-    Get.toNamed(Routes.lock, arguments: lockData)?.then((result) {
-      if (result != null && result is Map && result['deleted'] == true) {
-        loadInitializedLocks();
-      }
-    });
   }
 
   void showInitializeLockDialog(TTLockScanModel lock) {

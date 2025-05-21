@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_item_response.dart';
-import 'package:flutter_getx_boilerplate/modules/lock_list/lock_list_controller.dart';
+import 'package:flutter_getx_boilerplate/modules/lock/lock_controller.dart';
+import 'package:flutter_getx_boilerplate/modules/lock/widgets/empty_widget.dart';
+import 'package:flutter_getx_boilerplate/modules/lock/widgets/tab_bar_widget.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:get/get.dart';
 import 'package:ttlock_flutter/ttlock.dart';
 
-class LockListScreen extends GetView<LockListController> {
-  const LockListScreen({super.key});
+class LockScreen extends GetView<LockController> {
+  const LockScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,110 +34,88 @@ class LockListScreen extends GetView<LockListController> {
   }
 
   Widget _buildBody(BuildContext context) {
-    return Column(
-      children: [
-        _buildTabBar(context),
-        Expanded(
-          child: Obx(() {
-            if (controller.currentTab.value == 0) {
-              return _buildInitializedLocksTab(context);
-            } else {
-              return _buildScannedLocksTab(context);
-            }
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTabBar(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.2),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _buildTabItem(
-            context,
-            0,
-            'My Locks',
-            Icons.lock,
-            controller.initializedLocks.length,
-          ),
-          _buildTabItem(
-            context,
-            1,
-            'Scan Results',
-            Icons.bluetooth_searching,
-            controller.scannedLocks.length,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabItem(
-    BuildContext context,
-    int tabIndex,
-    String title,
-    IconData icon,
-    int count,
-  ) {
-    return Expanded(
-      child: InkWell(
-        onTap: () => controller.switchTab(tabIndex),
-        child: Obx(() => Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: controller.currentTab.value == tabIndex ? context.colors.primary : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    color: controller.currentTab.value == tabIndex ? context.colors.primary : Colors.grey,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: controller.currentTab.value == tabIndex ? context.colors.primary : Colors.grey,
-                      fontWeight: controller.currentTab.value == tabIndex ? FontWeight.bold : FontWeight.normal,
+    return Obx(() => DefaultTabController(
+          length: 2,
+          initialIndex: controller.currentTab.value,
+          child: Column(
+            children: [
+              TabBar(
+                onTap: (index) {
+                  controller.currentTab.value = index;
+                  if (index == 0) {
+                    if (controller.isScanning.value) {
+                      controller.stopScan();
+                    }
+                  }
+                },
+                labelColor: context.colors.primary,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: context.colors.primary,
+                indicatorWeight: 1,
+                indicatorSize: TabBarIndicatorSize.tab,
+                tabs: [
+                  Tab(
+                    height: 56,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.bluetooth_searching, size: 18),
+                        const SizedBox(width: 8),
+                        const Text('Nearby Locks'),
+                        const SizedBox(width: 4),
+                        if (controller.scannedLocks.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${controller.scannedLocks.length}',
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  if (count > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: context.colors.primary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                      ),
+                  Tab(
+                    height: 56,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.lock, size: 18),
+                        const SizedBox(width: 8),
+                        const Text('My Locks'),
+                        const SizedBox(width: 4),
+                        if (controller.initializedLocks.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${controller.initializedLocks.length}',
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                      ],
                     ),
+                  ),
                 ],
               ),
-            )),
-      ),
-    );
+              Expanded(
+                child: TabBarView(
+                  physics: const NeverScrollableScrollPhysics(), // Disable swiping
+                  children: [
+                    _buildNearbyLocksTab(context),
+                    _buildInitializedLocksTab(context),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ));
   }
 
   Widget _buildInitializedLocksTab(BuildContext context) {
@@ -200,101 +180,88 @@ class LockListScreen extends GetView<LockListController> {
     });
   }
 
-  Widget _buildScannedLocksTab(BuildContext context) {
+  Widget _buildNearbyLocksTab(BuildContext context) {
     return Obx(() {
       if (controller.isScanning.value && controller.scannedLocks.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              const Text(
-                'Scanning for locks...',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Please touch the keyboard of lock to wake it up',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              ),
-            ],
-          ),
-        );
+        return _scanningProgressIndicator();
       }
 
       if (!controller.isScanning.value && controller.scannedLocks.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.bluetooth_disabled,
-                size: 64,
-                color: Colors.grey.shade400,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No new locks found',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tap the scan button to find nearby locks',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                ),
-              ),
-            ],
-          ),
-        );
+        return _nearbyLocksEmpty();
       }
 
-      return Stack(
-        children: [
-          ListView.builder(
-            padding: EdgeInsets.only(top: controller.isScanning.value ? 48 : 12, bottom: 12),
-            itemCount: controller.scannedLocks.length,
-            itemBuilder: (context, index) {
-              return _buildScannedLockItem(context, controller.scannedLocks[index]);
-            },
-          ),
-          if (controller.isScanning.value)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                color: Colors.blue.withValues(alpha: 0.9),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Scanning...',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      );
+      return _nearbyLocksList();
     });
   }
+
+  Widget _nearbyLocksList() {
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: EdgeInsets.only(top: controller.isScanning.value ? 48 : 12, bottom: 12),
+          itemCount: controller.scannedLocks.length,
+          itemBuilder: (context, index) {
+            return _buildScannedLockItem(context, controller.scannedLocks[index]);
+          },
+        ),
+        if (controller.isScanning.value)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: Colors.blue.withValues(alpha: 0.9),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Scanning...',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _scanningProgressIndicator() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          const Text(
+            'Scanning for locks...',
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Please touch the keyboard of lock to wake it up',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _nearbyLocksEmpty() => const EmptyWidget(
+        icon: Icons.bluetooth_disabled,
+        title: 'No nearby locks found',
+        description: 'Tap the scan button to find new locks',
+      );
 
   Widget _buildInitializedLockItem(BuildContext context, TTLockInitializedItem lock) {
     return Card(

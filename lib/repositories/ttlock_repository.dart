@@ -1,6 +1,7 @@
 import 'package:flutter_getx_boilerplate/api/ttlock_api_service.dart';
 import 'package:flutter_getx_boilerplate/models/response/error/error_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_base_response.dart';
+import 'package:flutter_getx_boilerplate/models/response/ttlock_keyboard_pwd/ttlock_keyboard_pwd_list_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_token_response.dart';
 import 'package:flutter_getx_boilerplate/repositories/base_repository.dart';
 import 'package:flutter_getx_boilerplate/shared/services/storage_service.dart';
@@ -9,7 +10,6 @@ import 'package:get/get.dart';
 import '../models/response/ttlock_response/ttlock_detail_response.dart';
 import '../models/response/ttlock_response/ttlock_init_response.dart';
 import '../models/response/ttlock_response/ttlock_list_response.dart';
-import '../shared/utils/logger.dart';
 
 class TTLockRepository extends BaseRepository {
   final TTLockApiService apiService;
@@ -578,6 +578,171 @@ class TTLockRepository extends BaseRepository {
         rethrow;
       }
       throw ErrorResponse(message: 'failed_to_set_auto_lock_time'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> getRandomPasscode({
+    required int lockId,
+    required int keyboardPwdType,
+    String? keyboardPwdName,
+    required int startDate,
+    int? endDate,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      return await apiService.getRandomPasscode(
+        accessToken: accessToken,
+        lockId: lockId,
+        keyboardPwdType: keyboardPwdType,
+        keyboardPwdName: keyboardPwdName,
+        startDate: startDate,
+        endDate: endDate,
+      );
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_get_random_passcode'.tr);
+    }
+  }
+
+  // Add custom passcode
+  Future<Map<String, dynamic>> addCustomPasscode({
+    required int lockId,
+    required String keyboardPwd,
+    String? keyboardPwdName,
+    int? keyboardPwdType,
+    int? startDate,
+    int? endDate,
+    required int addType,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      return await apiService.addCustomPasscode(
+        accessToken: accessToken,
+        lockId: lockId,
+        keyboardPwd: keyboardPwd,
+        keyboardPwdName: keyboardPwdName,
+        keyboardPwdType: keyboardPwdType,
+        startDate: startDate,
+        endDate: endDate,
+        addType: addType,
+      );
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_add_custom_passcode'.tr);
+    }
+  }
+
+  // List all passcodes
+  Future<TTLockKeyboardPwdListResponse> listKeyboardPwd({
+    required int lockId,
+    String? searchStr,
+    int pageNo = 1,
+    int pageSize = 20,
+    int orderBy = 1,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      final response = await apiService.listKeyboardPwd(
+        accessToken: accessToken,
+        lockId: lockId,
+        searchStr: searchStr,
+        pageNo: pageNo,
+        pageSize: pageSize,
+        orderBy: orderBy,
+      );
+
+      return TTLockKeyboardPwdListResponse.fromJson(response);
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_list_passcodes'.tr);
+    }
+  }
+
+  // Delete passcode
+  Future<Map<String, dynamic>> deleteKeyboardPwd({
+    required int lockId,
+    required int keyboardPwdId,
+    required int deleteType,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      return await apiService.deleteKeyboardPwd(
+        accessToken: accessToken,
+        lockId: lockId,
+        keyboardPwdId: keyboardPwdId,
+        deleteType: deleteType,
+      );
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_delete_passcode'.tr);
+    }
+  }
+
+  // Change passcode
+  Future<Map<String, dynamic>> changeKeyboardPwd({
+    required int lockId,
+    required int keyboardPwdId,
+    String? keyboardPwdName,
+    String? newKeyboardPwd,
+    int? startDate,
+    int? endDate,
+    int? changeType,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      return await apiService.changeKeyboardPwd(
+        accessToken: accessToken,
+        lockId: lockId,
+        keyboardPwdId: keyboardPwdId,
+        keyboardPwdName: keyboardPwdName,
+        newKeyboardPwd: newKeyboardPwd,
+        startDate: startDate,
+        endDate: endDate,
+        changeType: changeType,
+      );
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_change_passcode'.tr);
     }
   }
 }

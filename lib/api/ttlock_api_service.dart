@@ -31,6 +31,12 @@ class TTLockApiEndpoints {
   static const String getPassageModeConfiguration = '/v3/lock/getPassageModeConfiguration';
   static const String setAutoLockTime = '/v3/lock/setAutoLockTime';
 
+  static const String getRandomPasscode = '/v3/keyboardPwd/get';
+  static const String addCustomPasscode = '/v3/keyboardPwd/add';
+  static const String listKeyboardPwd = '/v3/lock/listKeyboardPwd';
+  static const String deleteKeyboardPwd = '/v3/keyboardPwd/delete';
+  static const String changeKeyboardPwd = '/v3/keyboardPwd/change';
+
   static const String getEKey = '/v3/key/get';
   static const String accountEKeys = '/v3/key/list';
 
@@ -801,6 +807,250 @@ class TTLockApiService {
       throw ErrorResponse(message: 'network_error'.tr);
     } catch (e) {
       AppLogger.e('Error setting auto lock time: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> getRandomPasscode({
+    required String accessToken,
+    required int lockId,
+    required int keyboardPwdType,
+    String? keyboardPwdName,
+    required int startDate,
+    int? endDate,
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'keyboardPwdType': keyboardPwdType.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+        'startDate': startDate.toString(),
+      };
+
+      if (keyboardPwdName != null) {
+        data['keyboardPwdName'] = keyboardPwdName;
+      }
+
+      if (endDate != null) {
+        data['endDate'] = endDate.toString();
+      }
+
+      AppLogger.i('Getting random passcode for lock ID: $lockId');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.getRandomPasscode,
+        data: data,
+      );
+
+      AppLogger.i('Random passcode response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error getting random passcode');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error getting random passcode: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  // Add custom passcode
+  Future<Map<String, dynamic>> addCustomPasscode({
+    required String accessToken,
+    required int lockId,
+    required String keyboardPwd,
+    String? keyboardPwdName,
+    int? keyboardPwdType,
+    int? startDate,
+    int? endDate,
+    required int addType,
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'keyboardPwd': keyboardPwd,
+        'addType': addType.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      if (keyboardPwdName != null) {
+        data['keyboardPwdName'] = keyboardPwdName;
+      }
+
+      if (keyboardPwdType != null) {
+        data['keyboardPwdType'] = keyboardPwdType.toString();
+      }
+
+      if (startDate != null) {
+        data['startDate'] = startDate.toString();
+      }
+
+      if (endDate != null) {
+        data['endDate'] = endDate.toString();
+      }
+
+      AppLogger.i('Adding custom passcode for lock ID: $lockId');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.addCustomPasscode,
+        data: data,
+      );
+
+      AppLogger.i('Custom passcode response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error adding custom passcode');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error adding custom passcode: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  // Get all passcodes of a lock
+  Future<Map<String, dynamic>> listKeyboardPwd({
+    required String accessToken,
+    required int lockId,
+    String? searchStr,
+    int pageNo = 1,
+    int pageSize = 20,
+    int orderBy = 1,
+  }) async {
+    try {
+      final queryParameters = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'pageNo': pageNo.toString(),
+        'pageSize': pageSize.toString(),
+        'orderBy': orderBy.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      if (searchStr != null && searchStr.isNotEmpty) {
+        queryParameters['searchStr'] = searchStr;
+      }
+
+      AppLogger.i('Listing passcodes for lock ID: $lockId');
+
+      final response = await _dio.get(
+        TTLockApiEndpoints.listKeyboardPwd,
+        queryParameters: queryParameters,
+      );
+
+      AppLogger.i('List passcode response: ${response.data["total"]} passcodes found');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error listing passcodes');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error listing passcodes: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  // Delete passcode
+  Future<Map<String, dynamic>> deleteKeyboardPwd({
+    required String accessToken,
+    required int lockId,
+    required int keyboardPwdId,
+    required int deleteType,
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'keyboardPwdId': keyboardPwdId.toString(),
+        'deleteType': deleteType.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      AppLogger.i('Deleting passcode ID: $keyboardPwdId from lock ID: $lockId');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.deleteKeyboardPwd,
+        data: data,
+      );
+
+      AppLogger.i('Delete passcode response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error deleting passcode');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error deleting passcode: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  // Change passcode
+  Future<Map<String, dynamic>> changeKeyboardPwd({
+    required String accessToken,
+    required int lockId,
+    required int keyboardPwdId,
+    String? keyboardPwdName,
+    String? newKeyboardPwd,
+    int? startDate,
+    int? endDate,
+    int? changeType,
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'keyboardPwdId': keyboardPwdId.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      if (keyboardPwdName != null) {
+        data['keyboardPwdName'] = keyboardPwdName;
+      }
+
+      if (newKeyboardPwd != null) {
+        data['newKeyboardPwd'] = newKeyboardPwd;
+      }
+
+      if (startDate != null) {
+        data['startDate'] = startDate.toString();
+      }
+
+      if (endDate != null) {
+        data['endDate'] = endDate.toString();
+      }
+
+      if (changeType != null) {
+        data['changeType'] = changeType.toString();
+      }
+
+      AppLogger.i('Changing passcode ID: $keyboardPwdId for lock ID: $lockId');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.changeKeyboardPwd,
+        data: data,
+      );
+
+      AppLogger.i('Change passcode response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error changing passcode');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error changing passcode: $e');
       throw ErrorResponse(message: 'unknown_error'.tr);
     }
   }

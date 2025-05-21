@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:get/get.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
@@ -42,6 +43,9 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       title: titleWidget ??
           Text(
             title ?? '',
+            style: context.title.copyWith(
+              color: Colors.white,
+            ),
           ),
       leading: _getLeading(context),
       actions: actions,

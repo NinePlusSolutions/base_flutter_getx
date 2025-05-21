@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/lock_detail/lock_detail_controller.dart';
+import 'package:flutter_getx_boilerplate/routes/routes.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:get/get.dart';
 
@@ -204,6 +205,33 @@ class LockDetailScreen extends GetView<LockDetailController> {
               ),
               const Divider(),
 
+              ListTile(
+                leading: const Icon(Icons.vpn_key),
+                title: const Text('Manage Passcodes'),
+                subtitle: const Text('View and edit existing passcodes'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Get.back();
+                  Get.toNamed(
+                    Routes.passcodeManager,
+                    arguments: controller.lockInfo,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.add_circle_outline),
+                title: const Text('Create Passcode'),
+                subtitle: const Text('Generate new lock passcodes'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Get.back();
+                  Get.toNamed(
+                    Routes.createPasscode,
+                    arguments: controller.lockInfo,
+                  );
+                },
+              ),
+
               Obx(() => ListTile(
                     leading: const Icon(Icons.router),
                     title: const Text('Remote Control'),
@@ -263,18 +291,6 @@ class LockDetailScreen extends GetView<LockDetailController> {
                 onTap: () {
                   Get.back();
                   _showAutoLockTimeDialog(context);
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.notifications_outlined),
-                title: const Text('Notifications'),
-                subtitle: const Text('Configure lock event notifications'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                enabled: false,
-                onTap: () {
-                  // Future implementation
-                  Get.back();
                 },
               ),
 
