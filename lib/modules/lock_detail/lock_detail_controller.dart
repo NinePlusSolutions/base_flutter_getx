@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_detail_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_item_response.dart';
@@ -22,6 +23,17 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
   final isRemoteUnlockSettingInProgress = false.obs;
   final hasRemoteUnlockFeature = false.obs;
+
+  final isRenamingLock = false.obs;
+
+  final isPassageModeEnabled = false.obs;
+  final isAdminPasscodeUpdateInProgress = false.obs;
+  final isPassageModeUpdateInProgress = false.obs;
+  final isPassageModeConfigLoading = false.obs;
+  final passageModeConfig = Rxn<Map<String, dynamic>>();
+
+  final isAutoLockUpdateInProgress = false.obs;
+  final autoLockTime = RxnInt(null);
 
   TTLockDetailResponse? lockDetail;
   String? lockData;
@@ -85,7 +97,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
       final res = await repository.getLockDetail(lockInfo?.lockId ?? 0);
       lockDetail = res;
-
+      autoLockTime.value = res.autoLockTime;
       batteryLevel.value = res.electricQuantity;
     } catch (e) {
       String errorMessage = 'Failed to fetch lock details';
@@ -106,6 +118,53 @@ class LockDetailController extends BaseController<TTLockRepository> {
     }
   }
 
+  Future<void> setAutoLockTime(int seconds) async {
+    if (lockInfo?.lockId == null) {
+      showError(
+        'Error',
+        'Cannot set auto lock time: Lock ID not available',
+      );
+      return;
+    }
+
+    isAutoLockUpdateInProgress.value = true;
+
+    try {
+      AppLogger.i('Setting auto lock time for lock ID: ${lockInfo?.lockId} to $seconds seconds');
+
+      final response = await repository.setAutoLockTime(
+        lockId: lockInfo!.lockId,
+        seconds: seconds,
+      );
+
+      if (response.isSuccess) {
+        AppLogger.i('Auto lock time set successfully to $seconds seconds');
+
+        showSuccess(
+          'Success',
+          seconds > 0 ? 'Auto lock time set to $seconds ${seconds == 1 ? 'second' : 'seconds'}' : 'Auto lock disabled',
+        );
+      } else {
+        throw ErrorResponse(message: response.errmsg);
+      }
+    } catch (e) {
+      String errorMessage = 'Failed to set auto lock time';
+      if (e is ErrorResponse) {
+        errorMessage = e.message;
+        AppLogger.e('Set auto lock time failed with error: ${e.message}');
+      } else {
+        AppLogger.e('Set auto lock time failed with exception: ${e.runtimeType} - $e');
+      }
+
+      showError(
+        'Configuration Failed',
+        errorMessage,
+      );
+    } finally {
+      isAutoLockUpdateInProgress.value = false;
+    }
+  }
+
   Future<void> getLockOpenState({bool showLoadingIndicator = true}) async {
     if (lockInfo?.lockId == null) {
       AppLogger.i('Cannot query lock state: Lock ID not available');
@@ -120,8 +179,6 @@ class LockDetailController extends BaseController<TTLockRepository> {
     }
 
     try {
-      AppLogger.i('Querying lock state for ID: ${lockInfo?.lockId}');
-
       final response = await repository.queryLockOpenState(lockInfo?.lockId ?? 0);
       if (response.containsKey('state')) {
         final int state = response['state'];
@@ -277,6 +334,321 @@ class LockDetailController extends BaseController<TTLockRepository> {
     }
   }
 
+  Future<void> renameLock(String newName) async {
+    if (lockInfo?.lockId == null) {
+      showError(
+        'Error',
+        'Cannot rename lock: Lock ID not available',
+      );
+      return;
+    }
+
+    if (newName.trim().isEmpty) {
+      showError(
+        'Invalid Name',
+        'Lock name cannot be empty',
+      );
+      return;
+    }
+
+    isRenamingLock.value = true;
+
+    try {
+      AppLogger.i('Renaming lock ID: ${lockInfo?.lockId} to "$newName"');
+
+      final response = await repository.renameLock(
+        lockId: lockInfo?.lockId ?? 0,
+        newName: newName.trim(),
+      );
+
+      if (response.isSuccess) {
+        // Update the local lock info
+        if (lockInfo != null) {
+          lockInfo = lockInfo!.copyWith(lockAlias: newName.trim());
+          update(); // Trigger UI update
+        }
+
+        // Refresh lock details to ensure we have the latest data
+        await getLockDetail();
+
+        AppLogger.i('Lock renamed successfully to "$newName"');
+
+        showSuccess(
+          'Success',
+          'Lock renamed successfully',
+        );
+      } else {
+        throw ErrorResponse(message: response.errmsg);
+      }
+    } catch (e) {
+      String errorMessage = 'Failed to rename lock';
+      if (e is ErrorResponse) {
+        errorMessage = e.message;
+        AppLogger.e('Lock rename failed with error: ${e.message}');
+      } else {
+        AppLogger.e('Lock rename failed with exception: ${e.runtimeType} - $e');
+      }
+
+      showError(
+        'Rename Failed',
+        errorMessage,
+      );
+    } finally {
+      isRenamingLock.value = false;
+    }
+  }
+
+  Future<void> getPassageModeConfiguration() async {
+    if (lockInfo?.lockId == null) {
+      AppLogger.i('Cannot get passage mode config: Lock ID not available');
+      return;
+    }
+
+    isPassageModeConfigLoading.value = true;
+
+    try {
+      AppLogger.i('Fetching passage mode configuration for lock ID: ${lockInfo?.lockId}');
+      final response = await repository.getPassageModeConfiguration(lockId: lockInfo?.lockId ?? 0);
+
+      passageModeConfig.value = response;
+      isPassageModeEnabled.value = response['passageMode'] == 1;
+
+      AppLogger.i('Passage mode configuration fetched successfully');
+    } catch (e) {
+      String errorMessage = 'Failed to get passage mode configuration';
+      if (e is ErrorResponse) {
+        errorMessage = e.message;
+        AppLogger.e('Passage mode config fetch failed with error: ${e.message}');
+      } else {
+        AppLogger.e('Passage mode config fetch failed with exception: ${e.runtimeType} - $e');
+      }
+
+      showError(
+        'Configuration Error',
+        errorMessage,
+      );
+    } finally {
+      isPassageModeConfigLoading.value = false;
+    }
+  }
+
+  Future<void> updateAdminPasscode(String newPasscode) async {
+    if (lockInfo?.lockId == null) {
+      showError(
+        'Error',
+        'Cannot update admin passcode: Lock ID not available',
+      );
+      return;
+    }
+
+    // Check if passcode is valid (typically 4-9 digits)
+    if (!RegExp(r'^\d{4,9}$').hasMatch(newPasscode)) {
+      showError(
+        'Invalid Passcode',
+        'Admin passcode must be 4-9 digits',
+      );
+      return;
+    }
+
+    isAdminPasscodeUpdateInProgress.value = true;
+
+    try {
+      AppLogger.i('Updating admin passcode for lock ID: ${lockInfo?.lockId}');
+
+      // First step: If we have a direct Bluetooth connection to the lock,
+      // update passcode via SDK first
+      if (lockData != null) {
+        await _updateAdminPasscodeViaBluetooth(newPasscode);
+      }
+
+      // Second step: Update on cloud via API
+      // changeType: 1 - via Bluetooth, 2 - via gateway/WiFi
+      final changeType = (lockData != null) ? 1 : 2;
+
+      final response = await repository.changeAdminPasscode(
+        lockId: lockInfo?.lockId ?? 0,
+        password: newPasscode,
+        changeType: changeType,
+      );
+
+      if (response['errcode'] == 0) {
+        AppLogger.i('Admin passcode updated successfully');
+        showSuccess(
+          'Success',
+          'Admin passcode updated successfully',
+        );
+      } else {
+        throw ErrorResponse(message: response['errmsg'] ?? 'Failed to update admin passcode');
+      }
+    } catch (e) {
+      String errorMessage = 'Failed to update admin passcode';
+      if (e is ErrorResponse) {
+        errorMessage = e.message;
+        AppLogger.e('Admin passcode update failed with error: ${e.message}');
+      } else {
+        AppLogger.e('Admin passcode update failed with exception: ${e.runtimeType} - $e');
+      }
+
+      showError(
+        'Update Failed',
+        errorMessage,
+      );
+    } finally {
+      isAdminPasscodeUpdateInProgress.value = false;
+    }
+  }
+
+  Future<void> _updateAdminPasscodeViaBluetooth(String newPasscode) async {
+    if (lockData == null) {
+      throw ErrorResponse(message: 'Cannot update admin passcode via Bluetooth: No lock data available');
+    }
+
+    final completer = Completer<void>();
+
+    TTLock.modifyAdminPasscode(newPasscode, lockData ?? '', () {
+      AppLogger.i('Admin passcode updated via Bluetooth successfully');
+      completer.complete();
+    }, (errorCode, errorMsg) {
+      AppLogger.e('Failed to update admin passcode via Bluetooth: $errorCode - $errorMsg');
+      completer.completeError(ErrorResponse(message: 'Failed to update via Bluetooth: $errorMsg'));
+    });
+
+    return completer.future;
+  }
+
+  Future<void> configurePassageMode({
+    required bool enable,
+    required List<Map<String, dynamic>> cyclicConfig,
+    bool autoUnlock = false,
+  }) async {
+    if (lockInfo?.lockId == null) {
+      showError(
+        'Error',
+        'Cannot configure passage mode: Lock ID not available',
+      );
+      return;
+    }
+
+    isPassageModeUpdateInProgress.value = true;
+
+    try {
+      AppLogger.i('Configuring passage mode for lock ID: ${lockInfo?.lockId}');
+
+      // Convert cyclic config to JSON string
+      final cyclicConfigJson = jsonEncode(cyclicConfig);
+
+      // First step: If we have a direct Bluetooth connection to the lock,
+      // configure via SDK first for each passage mode entry
+      if (lockData != null && enable) {
+        for (final config in cyclicConfig) {
+          await _configurePassageModeViaBluetooth(config);
+        }
+
+        // If disabling passage mode, clear all passage modes
+        if (!enable) {
+          await _clearAllPassageModesViaBluetooth();
+        }
+      }
+
+      // Second step: Configure on cloud via API
+      // type: 1 - via Bluetooth, 2 - via gateway/WiFi
+      final type = (lockData != null) ? 1 : 2;
+
+      final response = await repository.configurePassageMode(
+        lockId: lockInfo?.lockId ?? 0,
+        passageMode: enable ? 1 : 2,
+        cyclicConfig: cyclicConfigJson,
+        type: type,
+        autoUnlock: autoUnlock ? 1 : 2,
+      );
+
+      if (response['errcode'] == 0) {
+        isPassageModeEnabled.value = enable;
+        AppLogger.i('Passage mode configured successfully');
+
+        // Refresh passage mode configuration
+        await getPassageModeConfiguration();
+
+        showSuccess(
+          'Success',
+          enable ? 'Passage mode enabled successfully' : 'Passage mode disabled successfully',
+        );
+      } else {
+        throw ErrorResponse(message: response['errmsg'] ?? 'Failed to configure passage mode');
+      }
+    } catch (e) {
+      String errorMessage = 'Failed to configure passage mode';
+      if (e is ErrorResponse) {
+        errorMessage = e.message;
+        AppLogger.e('Passage mode configuration failed with error: ${e.message}');
+      } else {
+        AppLogger.e('Passage mode configuration failed with exception: ${e.runtimeType} - $e');
+      }
+
+      showError(
+        'Configuration Failed',
+        errorMessage,
+      );
+    } finally {
+      isPassageModeUpdateInProgress.value = false;
+    }
+  }
+
+  Future<void> _configurePassageModeViaBluetooth(Map<String, dynamic> config) async {
+    if (lockData == null) {
+      throw ErrorResponse(message: 'Cannot configure passage mode via Bluetooth: No lock data available');
+    }
+
+    final completer = Completer<void>();
+
+    // Convert from API format to SDK format
+    final isAllDay = config['isAllDay'] == 1;
+    final startTime = config['startTime'] as int;
+    final endTime = config['endTime'] as int;
+    final weekDays = List<int>.from(config['weekDays']);
+
+    TTLock.addPassageMode(
+      TTPassageModeType.weekly,
+      weekDays,
+      null, // monthly is null when using weekly
+      startTime,
+      endTime,
+      lockData ?? '',
+      () {
+        AppLogger.i('Passage mode configured via Bluetooth successfully');
+        completer.complete();
+      },
+      (errorCode, errorMsg) {
+        AppLogger.e('Failed to configure passage mode via Bluetooth: $errorCode - $errorMsg');
+        completer.completeError(ErrorResponse(message: 'Failed to configure via Bluetooth: $errorMsg'));
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future<void> _clearAllPassageModesViaBluetooth() async {
+    if (lockData == null) {
+      throw ErrorResponse(message: 'Cannot clear passage modes via Bluetooth: No lock data available');
+    }
+
+    final completer = Completer<void>();
+
+    TTLock.clearAllPassageModes(
+      lockData ?? '',
+      () {
+        AppLogger.i('All passage modes cleared via Bluetooth successfully');
+        completer.complete();
+      },
+      (errorCode, errorMsg) {
+        AppLogger.e('Failed to clear passage modes via Bluetooth: $errorCode - $errorMsg');
+        completer.completeError(ErrorResponse(message: 'Failed to clear via Bluetooth: $errorMsg'));
+      },
+    );
+
+    return completer.future;
+  }
+
   Future<void> deleteLock() async {
     if (lockInfo?.lockId == null) {
       showError(
@@ -416,7 +788,6 @@ class LockDetailController extends BaseController<TTLockRepository> {
   void lockByBluetooth(String lockData) {
     TTLock.controlLock(lockData, TTControlAction.lock, (lockTime, electricQuantity, uniqueId) {
       AppLogger.i('Lock successful. Battery: $electricQuantity%');
-
       showSuccess('Lock Success', 'Lock successfully');
     }, (errorCode, errorMsg) {
       AppLogger.e('Lock failed: $errorCode - $errorMsg');

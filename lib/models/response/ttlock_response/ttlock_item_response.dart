@@ -31,9 +31,38 @@ class TTLockInitializedItem {
     required this.date,
   });
 
-  factory TTLockInitializedItem.fromJson(Map<String, dynamic> json) => _$TTLockItemFromJson(json);
+  factory TTLockInitializedItem.fromJson(Map<String, dynamic> json) => _$TTLockInitializedItemFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TTLockItemToJson(this);
+  Map<String, dynamic> toJson() => _$TTLockInitializedItemToJson(this);
+
+  // create a copy of the object with new values
+  TTLockInitializedItem copyWith({
+    int? lockId,
+    String? lockName,
+    String? lockAlias,
+    String? lockMac,
+    int? electricQuantity,
+    String? featureValue,
+    int? hasGateway,
+    String? lockData,
+    int? groupId,
+    String? groupName,
+    int? date,
+  }) {
+    return TTLockInitializedItem(
+      lockId: lockId ?? this.lockId,
+      lockName: lockName ?? this.lockName,
+      lockAlias: lockAlias ?? this.lockAlias,
+      lockMac: lockMac ?? this.lockMac,
+      electricQuantity: electricQuantity ?? this.electricQuantity,
+      featureValue: featureValue ?? this.featureValue,
+      hasGateway: hasGateway ?? this.hasGateway,
+      lockData: lockData ?? this.lockData,
+      groupId: groupId ?? this.groupId,
+      groupName: groupName ?? this.groupName,
+      date: date ?? this.date,
+    );
+  }
 
   @override
   bool operator ==(Object other) {

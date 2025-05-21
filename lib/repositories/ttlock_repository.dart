@@ -1,5 +1,6 @@
 import 'package:flutter_getx_boilerplate/api/ttlock_api_service.dart';
 import 'package:flutter_getx_boilerplate/models/response/error/error_response.dart';
+import 'package:flutter_getx_boilerplate/models/response/ttlock_base_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_token_response.dart';
 import 'package:flutter_getx_boilerplate/repositories/base_repository.dart';
 import 'package:flutter_getx_boilerplate/shared/services/storage_service.dart';
@@ -440,6 +441,143 @@ class TTLockRepository extends BaseRepository {
         rethrow;
       }
       throw ErrorResponse(message: 'failed_to_get_account_ekeys'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> changeAdminPasscode({
+    required int lockId,
+    required String password,
+    required int changeType,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      return await apiService.changeAdminPasscode(
+        accessToken: accessToken,
+        lockId: lockId,
+        password: password,
+        changeType: changeType,
+      );
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_change_admin_passcode'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> configurePassageMode({
+    required int lockId,
+    required int passageMode,
+    required String cyclicConfig,
+    required int type,
+    int? autoUnlock,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      return await apiService.configurePassageMode(
+        accessToken: accessToken,
+        lockId: lockId,
+        passageMode: passageMode,
+        cyclicConfig: cyclicConfig,
+        type: type,
+        autoUnlock: autoUnlock,
+      );
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_configure_passage_mode'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> getPassageModeConfiguration({
+    required int lockId,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      return await apiService.getPassageModeConfiguration(
+        accessToken: accessToken,
+        lockId: lockId,
+      );
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_get_passage_mode_configuration'.tr);
+    }
+  }
+
+  Future<TTLockBaseResponse> renameLock({
+    required int lockId,
+    required String newName,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      final response = await apiService.renameLock(
+        accessToken: accessToken,
+        lockId: lockId,
+        lockAlias: newName,
+      );
+
+      return TTLockBaseResponse.fromJson(response);
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_rename_lock'.tr);
+    }
+  }
+
+  Future<TTLockBaseResponse> setAutoLockTime({
+    required int lockId,
+    required int seconds,
+    int type = 2,
+  }) async {
+    try {
+      await refreshTokenIfNeeded();
+      final accessToken = StorageService.ttlockToken?.accessToken;
+
+      if (accessToken == null) {
+        throw ErrorResponse(message: 'not_logged_in'.tr);
+      }
+
+      final response = await apiService.setAutoLockTime(
+        accessToken: accessToken,
+        lockId: lockId,
+        seconds: seconds,
+        type: type,
+      );
+
+      return TTLockBaseResponse.fromJson(response);
+    } catch (e) {
+      if (e is ErrorResponse) {
+        rethrow;
+      }
+      throw ErrorResponse(message: 'failed_to_set_auto_lock_time'.tr);
     }
   }
 }

@@ -23,9 +23,15 @@ class TTLockApiEndpoints {
   static const String remoteUnlock = '/v3/lock/unlock';
   static const String remoteLock = '/v3/lock/lock';
   static const String queryLockOpenState = '/v3/lock/queryOpenState';
+  static const String listEKeys = '/v3/lock/listKey';
+
+  static const String renameLock = '/v3/lock/rename';
+  static const String changeAdminPasscode = '/v3/lock/changeAdminKeyboardPwd';
+  static const String configurePassageMode = '/v3/lock/configurePassageMode';
+  static const String getPassageModeConfiguration = '/v3/lock/getPassageModeConfiguration';
+  static const String setAutoLockTime = '/v3/lock/setAutoLockTime';
 
   static const String getEKey = '/v3/key/get';
-  static const String listEKeys = '/v3/lock/listKey';
   static const String accountEKeys = '/v3/key/list';
 
   static const String gatewayList = '/v3/gateway/list';
@@ -530,7 +536,6 @@ class TTLockApiService {
     }
   }
 
-// Lấy danh sách eKey cho một khóa
   Future<Map<String, dynamic>> listLockEKeys({
     required String accessToken,
     required int lockId,
@@ -577,7 +582,6 @@ class TTLockApiService {
     }
   }
 
-// Lấy tất cả eKey của tài khoản hiện tại
   Future<Map<String, dynamic>> getAccountEKeys({
     required String accessToken,
     String? lockAlias,
@@ -616,6 +620,187 @@ class TTLockApiService {
       throw ErrorResponse(message: 'network_error'.tr);
     } catch (e) {
       AppLogger.e('Error getting account eKeys: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> changeAdminPasscode({
+    required String accessToken,
+    required int lockId,
+    required String password,
+    required int changeType,
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'password': password,
+        'changeType': changeType.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      AppLogger.i('Changing admin passcode for lock ID: $lockId');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.changeAdminPasscode,
+        data: data,
+      );
+
+      AppLogger.i('Change admin passcode response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error changing admin passcode');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error changing admin passcode: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> configurePassageMode({
+    required String accessToken,
+    required int lockId,
+    required int passageMode,
+    required String cyclicConfig,
+    required int type,
+    int? autoUnlock,
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'passageMode': passageMode.toString(),
+        'cyclicConfig': cyclicConfig,
+        'type': type.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      if (autoUnlock != null) {
+        data['autoUnlock'] = autoUnlock.toString();
+      }
+
+      AppLogger.i('Configuring passage mode for lock ID: $lockId');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.configurePassageMode,
+        data: data,
+      );
+
+      AppLogger.i('Configure passage mode response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error configuring passage mode');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error configuring passage mode: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> getPassageModeConfiguration({
+    required String accessToken,
+    required int lockId,
+  }) async {
+    try {
+      final queryParameters = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      AppLogger.i('Getting passage mode configuration for lock ID: $lockId');
+
+      final response = await _dio.get(
+        TTLockApiEndpoints.getPassageModeConfiguration,
+        queryParameters: queryParameters,
+      );
+
+      AppLogger.i('Get passage mode configuration response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error getting passage mode configuration');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error getting passage mode configuration: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> renameLock({
+    required String accessToken,
+    required int lockId,
+    required String lockAlias,
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'lockAlias': lockAlias,
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      AppLogger.i('Renaming lock with ID: $lockId to "$lockAlias"');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.renameLock,
+        data: data,
+      );
+
+      AppLogger.i('Lock rename response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error renaming lock');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error renaming lock: $e');
+      throw ErrorResponse(message: 'unknown_error'.tr);
+    }
+  }
+
+  Future<Map<String, dynamic>> setAutoLockTime({
+    required String accessToken,
+    required int lockId,
+    required int seconds,
+    int type = 2, // Mặc định là qua gateway hoặc WiFi lock
+  }) async {
+    try {
+      final data = {
+        'clientId': clientId,
+        'accessToken': accessToken,
+        'lockId': lockId.toString(),
+        'seconds': seconds.toString(),
+        'type': type.toString(),
+        'date': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      AppLogger.i('Setting auto lock time for lock ID: $lockId to $seconds seconds');
+
+      final response = await _dio.post(
+        TTLockApiEndpoints.setAutoLockTime,
+        data: data,
+      );
+
+      AppLogger.i('Set auto lock time response: ${response.data}');
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error setting auto lock time');
+      }
+      throw ErrorResponse(message: 'network_error'.tr);
+    } catch (e) {
+      AppLogger.e('Error setting auto lock time: $e');
       throw ErrorResponse(message: 'unknown_error'.tr);
     }
   }
