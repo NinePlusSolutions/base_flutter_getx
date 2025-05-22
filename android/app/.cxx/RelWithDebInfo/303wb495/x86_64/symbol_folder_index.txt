@@ -1,0 +1,1 @@
+/Users/pixeldeveloper/Documents/workingspace/mobile-apps/base_flutter_getx/build/app/intermediates/cxx/RelWithDebInfo/303wb495/obj/x86_64

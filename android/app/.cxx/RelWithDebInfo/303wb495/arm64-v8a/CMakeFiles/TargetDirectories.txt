@@ -1,0 +1,2 @@
+/Users/pixeldeveloper/Documents/workingspace/mobile-apps/base_flutter_getx/android/app/.cxx/RelWithDebInfo/303wb495/arm64-v8a/CMakeFiles/edit_cache.dir
+/Users/pixeldeveloper/Documents/workingspace/mobile-apps/base_flutter_getx/android/app/.cxx/RelWithDebInfo/303wb495/arm64-v8a/CMakeFiles/rebuild_cache.dir

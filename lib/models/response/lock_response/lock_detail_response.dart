@@ -1,18 +1,16 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'ttlock_detail_response.g.dart';
+part 'lock_detail_response.g.dart';
 
 @JsonSerializable()
-class TTLockDetailResponse {
+class LockDetailResponse {
   final int lockId;
   final String lockName;
   final String lockAlias;
   final String lockMac;
   final String? noKeyPwd;
-  final int electricQuantity;
-  final String featureValue;
-  final int? hasGateway;
-  final String? lockData;
+  final int? electricQuantity;
+  final String? featureValue;
   final int? timezoneRawOffset;
   final String? modelNum;
   final String? hardwareRevision;
@@ -25,18 +23,16 @@ class TTLockDetailResponse {
   final int? openDirection;
   final int? passageMode;
   final int? passageModeAutoUnlock;
-  final int date;
+  final int? date;
 
-  TTLockDetailResponse({
+  LockDetailResponse({
     required this.lockId,
     required this.lockName,
     required this.lockAlias,
     required this.lockMac,
     this.noKeyPwd,
-    required this.electricQuantity,
-    required this.featureValue,
-    this.hasGateway,
-    this.lockData,
+    this.electricQuantity,
+    this.featureValue,
     this.timezoneRawOffset,
     this.modelNum,
     this.hardwareRevision,
@@ -49,14 +45,14 @@ class TTLockDetailResponse {
     this.openDirection,
     this.passageMode,
     this.passageModeAutoUnlock,
-    required this.date,
+    this.date,
   });
 
-  factory TTLockDetailResponse.fromJson(Map<String, dynamic> json) => _$TTLockDetailResponseFromJson(json);
+  factory LockDetailResponse.fromJson(Map<String, dynamic> json) => _$LockDetailResponseFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TTLockDetailResponseToJson(this);
+  Map<String, dynamic> toJson() => _$LockDetailResponseToJson(this);
 
-  TTLockDetailResponse copyWith({
+  LockDetailResponse copyWith({
     int? lockId,
     String? lockName,
     String? lockAlias,
@@ -64,8 +60,6 @@ class TTLockDetailResponse {
     String? noKeyPwd,
     int? electricQuantity,
     String? featureValue,
-    int? hasGateway,
-    String? lockData,
     int? timezoneRawOffset,
     String? modelNum,
     String? hardwareRevision,
@@ -80,7 +74,7 @@ class TTLockDetailResponse {
     int? passageModeAutoUnlock,
     int? date,
   }) {
-    return TTLockDetailResponse(
+    return LockDetailResponse(
       lockId: lockId ?? this.lockId,
       lockName: lockName ?? this.lockName,
       lockAlias: lockAlias ?? this.lockAlias,
@@ -88,8 +82,6 @@ class TTLockDetailResponse {
       noKeyPwd: noKeyPwd ?? this.noKeyPwd,
       electricQuantity: electricQuantity ?? this.electricQuantity,
       featureValue: featureValue ?? this.featureValue,
-      hasGateway: hasGateway ?? this.hasGateway,
-      lockData: lockData ?? this.lockData,
       timezoneRawOffset: timezoneRawOffset ?? this.timezoneRawOffset,
       modelNum: modelNum ?? this.modelNum,
       hardwareRevision: hardwareRevision ?? this.hardwareRevision,

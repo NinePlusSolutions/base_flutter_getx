@@ -30,7 +30,10 @@ class LockDetailScreen extends GetView<LockDetailController> {
 
   _buildAction(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.settings),
+      icon: Icon(
+        Icons.settings,
+        color: context.colors.surface,
+      ),
       onPressed: () => _showSettingsBottomSheet(context),
     );
   }
@@ -110,7 +113,22 @@ class LockDetailScreen extends GetView<LockDetailController> {
   }
 
   Widget _buildLockControls(BuildContext context) {
-    return _buildRemoteControls(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+
+        // Control type tabs
+        _buildControlTypeTabs(context),
+
+        const SizedBox(height: 16),
+
+        // Control buttons based on selected type
+        controller.selectedControlType.value == 'remote'
+            ? _buildRemoteControls(context)
+            : _buildBluetoothControls(context),
+      ],
+    );
   }
 
   Widget _buildRemoteControls(BuildContext context) {
@@ -311,6 +329,165 @@ class LockDetailScreen extends GetView<LockDetailController> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildControlTypeTabs(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Obx(() => _buildControlTab(
+                  context: context,
+                  title: 'Remote',
+                  icon: Icons.wifi,
+                  isSelected: controller.selectedControlType.value == 'remote',
+                  onTap: () => controller.setControlType('remote'),
+                )),
+          ),
+          Expanded(
+            child: Obx(() => _buildControlTab(
+                  context: context,
+                  title: 'Bluetooth',
+                  icon: Icons.bluetooth,
+                  isSelected: controller.selectedControlType.value == 'bluetooth',
+                  onTap: () => controller.setControlType('bluetooth'),
+                )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlTab({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? context.theme.primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey[700],
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBluetoothControls(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue[100]!),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline, color: Colors.blue),
+              const SizedBox(width: 12),
+              Expanded(
+                child: controller.lockData == null
+                    ? const Text(
+                        'Bluetooth control requires being near the lock',
+                        style: TextStyle(color: Colors.blue, fontSize: 14),
+                      )
+                    : const Text(
+                        'Connected via Bluetooth',
+                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.teal,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  disabledBackgroundColor: Colors.grey[300],
+                ),
+                onPressed: (controller.lockData == null || controller.isBluetoothActionInProgress.value)
+                    ? null
+                    : () => controller.unlockByBluetooth(controller.lockData!),
+                icon: controller.isBluetoothActionInProgress.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.lock_open),
+                label: const Text('UNLOCK'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.red.shade700,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  disabledBackgroundColor: Colors.grey[300],
+                ),
+                onPressed: (controller.lockData == null || controller.isBluetoothActionInProgress.value)
+                    ? null
+                    : () => controller.lockByBluetooth(controller.lockData!),
+                icon: controller.isBluetoothActionInProgress.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.lock),
+                label: const Text('LOCK'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

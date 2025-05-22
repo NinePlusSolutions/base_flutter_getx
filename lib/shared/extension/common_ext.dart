@@ -17,4 +17,13 @@ extension FlavorExtension on Flavor {
         return '';
     }
   }
+
+  String get toContentType {
+    switch (this) {
+      case Flavor.dev:
+        return ApiConstants.contentTypeDev;
+      case Flavor.prod:
+        return 'application/json';
+    }
+  }
 }
