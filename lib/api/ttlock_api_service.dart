@@ -4,7 +4,7 @@ import 'package:flutter_getx_boilerplate/models/response/error/error_response.da
 import 'package:get/get.dart';
 import 'dart:convert';
 
-import '../models/response/ttlock_response/ttlock_detail_response.dart';
+import '../models/response/lock_response/lock_detail_response.dart';
 import '../models/response/ttlock_response/ttlock_init_response.dart';
 import '../models/response/ttlock_response/ttlock_list_response.dart';
 import '../models/response/ttlock_response/ttlock_token_response.dart';
@@ -189,7 +189,7 @@ class TTLockApiService {
     }
   }
 
-  Future<TTLockDetailResponse> getLockDetail({
+  Future<LockDetailResponse> getLockDetail({
     required String accessToken,
     required int lockId,
   }) async {
@@ -207,7 +207,7 @@ class TTLockApiService {
       );
 
       AppLogger.i('Lock detail response: ${response.data}');
-      return TTLockDetailResponse.fromJson(response.data);
+      return LockDetailResponse.fromJson(response.data);
     } on DioException catch (e) {
       if (e.response != null) {
         throw ErrorResponse(message: e.response?.data['errmsg'] ?? 'Error getting lock details');

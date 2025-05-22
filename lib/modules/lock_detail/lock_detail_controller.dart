@@ -1,17 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_detail_response.dart';
+import 'package:flutter_getx_boilerplate/models/response/lock_response/lock_detail_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_item_response.dart';
+import 'package:flutter_getx_boilerplate/repositories/repositories.dart';
 import 'package:flutter_getx_boilerplate/repositories/ttlock_repository.dart';
+import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 import 'package:get/get.dart';
 import 'package:ttlock_flutter/ttlock.dart';
 
+import '../../models/request/request.dart';
 import '../../models/response/error/error_response.dart';
 import '../../shared/utils/logger.dart';
 import '../base/base_controller.dart';
 
-class LockDetailController extends BaseController<TTLockRepository> {
+class LockDetailController extends BaseController<LockRepository> {
+  final TTLockRepository lockRepository = Get.find();
+  final GatewayRepository gatewayRepository = Get.find();
+  final EkeyRepository ekeyRepository = Get.find();
   TTLockInitializedItem? lockInfo;
 
   final batteryLevel = 0.obs;
@@ -24,6 +30,8 @@ class LockDetailController extends BaseController<TTLockRepository> {
   final isRemoteUnlockSettingInProgress = false.obs;
   final hasRemoteUnlockFeature = false.obs;
 
+  final isBluetoothActionInProgress = false.obs;
+
   final isRenamingLock = false.obs;
 
   final isPassageModeEnabled = false.obs;
@@ -32,10 +40,12 @@ class LockDetailController extends BaseController<TTLockRepository> {
   final isPassageModeConfigLoading = false.obs;
   final passageModeConfig = Rxn<Map<String, dynamic>>();
 
+  final selectedControlType = 'remote'.obs;
+
   final isAutoLockUpdateInProgress = false.obs;
   final autoLockTime = RxnInt(null);
 
-  TTLockDetailResponse? lockDetail;
+  LockDetailResponse? lockDetail;
   String? lockData;
 
   LockDetailController(super.repository);
@@ -57,31 +67,36 @@ class LockDetailController extends BaseController<TTLockRepository> {
     }
   }
 
-  // Future<void> fetchLockDataFromAPI() async {
-  //   if (lockInfo?.lockId == null) {
-  //     AppLogger.i('Cannot fetch lockData from API: Lock ID not available');
-  //     return;
-  //   }
+  Future<void> fetchLockDataFromAPI() async {
+    if (lockInfo?.lockId == null) {
+      AppLogger.i('Cannot fetch lockData from API: Lock ID not available');
+      return;
+    }
 
-  //   try {
-  //     AppLogger.i('Fetching lockData from API for lock ID: ${lockInfo?.lockId}');
+    try {
+      AppLogger.i('Fetching lockData from API for lock ID: ${lockInfo?.lockId}');
 
-  //     isRemoteActionInProgress.value = true;
-  //     remoteAction.value = 'setup';
+      isRemoteActionInProgress.value = true;
+      remoteAction.value = 'setup';
 
-  //     final lockId = lockInfo?.lockId ?? 0;
-  //     final response = await repository.getEKey(lockId);
-  //   } catch (e) {
-  //     if (e is ErrorResponse) {
-  //       AppLogger.e('LockData fetch failed with error: ${e.message}');
-  //     } else {
-  //       AppLogger.e('LockData fetch failed with exception: ${e.runtimeType} - $e');
-  //     }
-  //   } finally {
-  //     isRemoteActionInProgress.value = false;
-  //     remoteAction.value = '';
-  //   }
-  // }
+      final lockId = lockInfo?.lockId ?? 0;
+      final request = LockBaseRequest(
+        lockId: lockId,
+        date: DateTime.now().millisecondsSinceEpoch,
+      );
+      final response = await ekeyRepository.getEKey(request: request);
+      lockData = response.lockData;
+    } catch (e) {
+      if (e is ErrorResponse) {
+        AppLogger.e('LockData fetch failed with error: ${e.message}');
+      } else {
+        AppLogger.e('LockData fetch failed with exception: ${e.runtimeType} - $e');
+      }
+    } finally {
+      isRemoteActionInProgress.value = false;
+      remoteAction.value = '';
+    }
+  }
 
   Future<void> getLockDetail() async {
     if (lockInfo?.lockId == null) {
@@ -94,11 +109,15 @@ class LockDetailController extends BaseController<TTLockRepository> {
       remoteAction.value = 'setup';
 
       AppLogger.i('Fetching lock details for ID: ${lockInfo?.lockId}');
+      final request = LockBaseRequest(
+        lockId: lockInfo?.lockId,
+        date: DateTime.now().millisecondsSinceEpoch,
+      );
 
-      final res = await repository.getLockDetail(lockInfo?.lockId ?? 0);
+      final res = await repository.getLockDetail(request: request);
       lockDetail = res;
       autoLockTime.value = res.autoLockTime;
-      batteryLevel.value = res.electricQuantity;
+      batteryLevel.value = res.electricQuantity ?? 0;
     } catch (e) {
       String errorMessage = 'Failed to fetch lock details';
       if (e is ErrorResponse) {
@@ -132,9 +151,15 @@ class LockDetailController extends BaseController<TTLockRepository> {
     try {
       AppLogger.i('Setting auto lock time for lock ID: ${lockInfo?.lockId} to $seconds seconds');
 
-      final response = await repository.setAutoLockTime(
-        lockId: lockInfo!.lockId,
+      final request = AutoLockTimeRequest(
+        lockId: lockInfo?.lockId,
         seconds: seconds,
+        type: 2,
+        date: DateTime.now().millisecondsSinceEpoch,
+      );
+
+      final response = await repository.setAutoLockTime(
+        request: request,
       );
 
       if (response.isSuccess) {
@@ -179,15 +204,12 @@ class LockDetailController extends BaseController<TTLockRepository> {
     }
 
     try {
-      final response = await repository.queryLockOpenState(lockInfo?.lockId ?? 0);
-      if (response.containsKey('state')) {
-        final int state = response['state'];
-        remoteLockState.value = state;
-
-        AppLogger.i('Lock state query successful: state=$state');
-      } else {
-        AppLogger.e('Lock state query missing state field in response');
-      }
+      final request = LockBaseRequest(
+        lockId: lockInfo?.lockId,
+        date: DateTime.now().millisecondsSinceEpoch,
+      );
+      final response = await gatewayRepository.queryLockOpenState(request: request);
+      remoteLockState.value = response.state?.value ?? 2;
     } catch (e) {
       String errorMessage = 'Failed to query lock state';
       if (e is ErrorResponse) {
@@ -253,12 +275,16 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
     try {
       AppLogger.i('Starting remote unlock for lock ID: ${lockInfo?.lockId}');
-      final response = await repository.remoteControlLock(
-        lockId: lockInfo?.lockId ?? 0,
+      final request = LockBaseRequest(
+        lockId: lockInfo?.lockId,
+        date: DateTime.now().millisecondsSinceEpoch,
+      );
+      final response = await gatewayRepository.remoteControlLock(
+        request: request,
         controlAction: 'unlock',
       );
 
-      if (response['errcode'] == 0) {
+      if (response.errcode == 0) {
         remoteLockState.value = 1;
 
         AppLogger.i('Remote unlock successful');
@@ -271,11 +297,11 @@ class LockDetailController extends BaseController<TTLockRepository> {
           'Success',
           'Door unlocked remotely',
         );
-      } else if (response['errcode'] == -4043) {
+      } else if (response.errcode == -4043) {
         AppLogger.e('Remote unlock failed: Remote unlock feature is not enabled');
       } else {
-        final errorMsg = response['errmsg'] ?? 'Unknown error during remote unlock';
-        AppLogger.e('Remote unlock API error: ${response['errcode']} - $errorMsg');
+        final errorMsg = response.errmsg;
+        AppLogger.e('Remote unlock API error: ${response.errcode} - $errorMsg');
         throw ErrorResponse(message: errorMsg);
       }
     } finally {
@@ -298,12 +324,16 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
     try {
       AppLogger.i('Starting remote lock for lock ID: ${lockInfo?.lockId}');
-      final response = await repository.remoteControlLock(
-        lockId: lockInfo?.lockId ?? 0,
+      final request = LockBaseRequest(
+        lockId: lockInfo?.lockId,
+        date: DateTime.now().millisecondsSinceEpoch,
+      );
+      final response = await gatewayRepository.remoteControlLock(
+        request: request,
         controlAction: 'lock',
       );
 
-      if (response['errcode'] == 0) {
+      if (response.errcode == 0) {
         AppLogger.i('Remote lock successful');
 
         Future.delayed(const Duration(seconds: 5), () {
@@ -315,7 +345,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
           'Door locked remotely',
         );
       } else {
-        throw ErrorResponse(message: response['errmsg'] ?? 'Unknown error during remote lock');
+        throw ErrorResponse(message: response.errmsg);
       }
     } catch (e) {
       String errorMessage = 'Failed to lock remotely';
@@ -355,20 +385,22 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
     try {
       AppLogger.i('Renaming lock ID: ${lockInfo?.lockId} to "$newName"');
+      final request = RenameLockRequest(
+        lockId: lockInfo?.lockId,
+        lockAlias: newName.trim(),
+        date: DateTime.now().millisecondsSinceEpoch,
+      );
 
       final response = await repository.renameLock(
-        lockId: lockInfo?.lockId ?? 0,
-        newName: newName.trim(),
+        request: request,
       );
 
       if (response.isSuccess) {
-        // Update the local lock info
         if (lockInfo != null) {
           lockInfo = lockInfo!.copyWith(lockAlias: newName.trim());
-          update(); // Trigger UI update
+          update();
         }
 
-        // Refresh lock details to ensure we have the latest data
         await getLockDetail();
 
         AppLogger.i('Lock renamed successfully to "$newName"');
@@ -408,7 +440,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
 
     try {
       AppLogger.i('Fetching passage mode configuration for lock ID: ${lockInfo?.lockId}');
-      final response = await repository.getPassageModeConfiguration(lockId: lockInfo?.lockId ?? 0);
+      final response = await lockRepository.getPassageModeConfiguration(lockId: lockInfo?.lockId ?? 0);
 
       passageModeConfig.value = response;
       isPassageModeEnabled.value = response['passageMode'] == 1;
@@ -465,7 +497,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
       // changeType: 1 - via Bluetooth, 2 - via gateway/WiFi
       final changeType = (lockData != null) ? 1 : 2;
 
-      final response = await repository.changeAdminPasscode(
+      final response = await lockRepository.changeAdminPasscode(
         lockId: lockInfo?.lockId ?? 0,
         password: newPasscode,
         changeType: changeType,
@@ -554,7 +586,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
       // type: 1 - via Bluetooth, 2 - via gateway/WiFi
       final type = (lockData != null) ? 1 : 2;
 
-      final response = await repository.configurePassageMode(
+      final response = await lockRepository.configurePassageMode(
         lockId: lockInfo?.lockId ?? 0,
         passageMode: enable ? 1 : 2,
         cyclicConfig: cyclicConfigJson,
@@ -670,7 +702,7 @@ class LockDetailController extends BaseController<TTLockRepository> {
         await _resetLock();
       }
 
-      final response = await repository.deleteLock(lockId);
+      final response = await lockRepository.deleteLock(lockId);
 
       if (response['errcode'] == 0) {
         AppLogger.i('Lock deletion successful');
@@ -764,19 +796,33 @@ class LockDetailController extends BaseController<TTLockRepository> {
     });
   }
 
+  void setControlType(String type) {
+    selectedControlType.value = type;
+
+    // If switching to Bluetooth mode and we don't have lockData,
+    // try to get the eKey data from API
+    if (type == 'bluetooth' && lockData == null && lockInfo?.lockId != null) {
+      fetchLockDataFromAPI();
+    }
+  }
+
   void unlockByBluetooth(String lockData) {
+    if (isBluetoothActionInProgress.value) {
+      return;
+    }
     AppLogger.i('Sending unlock via Bluetooth');
+    isBluetoothActionInProgress.value = true;
 
     TTLock.controlLock(lockData, TTControlAction.unlock, (lockTime, electricQuantity, uniqueId) {
-      batteryLevel.value = electricQuantity;
       AppLogger.i('Unlock successful. Battery: $electricQuantity%');
-
+      isBluetoothActionInProgress.value = false;
       showSuccess(
         'Success',
         'Door unlocked successfully',
       );
     }, (errorCode, errorMsg) {
       AppLogger.e('Unlock failed');
+      isBluetoothActionInProgress.value = false;
 
       showError(
         'Unlock Failed',
@@ -786,11 +832,20 @@ class LockDetailController extends BaseController<TTLockRepository> {
   }
 
   void lockByBluetooth(String lockData) {
+    if (isBluetoothActionInProgress.value) {
+      return;
+    }
+
+    AppLogger.i('Sending lock via Bluetooth');
+
+    isBluetoothActionInProgress.value = true;
     TTLock.controlLock(lockData, TTControlAction.lock, (lockTime, electricQuantity, uniqueId) {
       AppLogger.i('Lock successful. Battery: $electricQuantity%');
+      isBluetoothActionInProgress.value = false;
       showSuccess('Lock Success', 'Lock successfully');
     }, (errorCode, errorMsg) {
       AppLogger.e('Lock failed: $errorCode - $errorMsg');
+      isBluetoothActionInProgress.value = false;
       showError('Lock Failed', 'Failed to lock: $errorMsg');
     });
   }

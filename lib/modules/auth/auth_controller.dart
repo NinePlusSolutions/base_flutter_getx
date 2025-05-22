@@ -1,3 +1,4 @@
+import 'package:flutter_getx_boilerplate/shared/utils/logger.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/base/base_controller.dart';
@@ -49,9 +50,14 @@ class AuthController extends BaseController<AuthRepository> {
       await loginWithTTLock();
       NavigatorHelper.toHome();
     } on ErrorResponse catch (e) {
+      AppLogger.e('Login failed with ErrorResponse: ${e.message}');
       showError("login_failed".tr, e.message);
     } catch (e) {
-      showError("login_failed".tr, e.toString());
+      AppLogger.e('Login failed with unexpected error: ${e.toString()}');
+      final errorMessage = e.toString().contains('SocketException')
+          ? 'Network connection error. Please check your internet connection.'
+          : e.toString();
+      showError("login_failed".tr, errorMessage);
     } finally {
       setLoading(false);
     }
@@ -63,6 +69,7 @@ class AuthController extends BaseController<AuthRepository> {
 
     final response = await ttlockRepository.login(username, password);
     if (response.accessToken.isNotEmpty) {
+      AppLogger.i('TTLock login successful with token length: ${response.accessToken.length}');
     } else {
       throw ErrorResponse(message: 'ttlock_login_failed'.tr);
     }

@@ -1,13 +1,13 @@
 import 'package:flutter_getx_boilerplate/api/ttlock_api_service.dart';
 import 'package:flutter_getx_boilerplate/models/response/error/error_response.dart';
-import 'package:flutter_getx_boilerplate/models/response/ttlock_base_response.dart';
+import 'package:flutter_getx_boilerplate/models/response/lock_response/lock_base_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_keyboard_pwd/ttlock_keyboard_pwd_list_response.dart';
 import 'package:flutter_getx_boilerplate/models/response/ttlock_response/ttlock_token_response.dart';
 import 'package:flutter_getx_boilerplate/repositories/base_repository.dart';
 import 'package:flutter_getx_boilerplate/shared/services/storage_service.dart';
 import 'package:get/get.dart';
 
-import '../models/response/ttlock_response/ttlock_detail_response.dart';
+import '../models/response/lock_response/lock_detail_response.dart';
 import '../models/response/ttlock_response/ttlock_init_response.dart';
 import '../models/response/ttlock_response/ttlock_list_response.dart';
 
@@ -187,7 +187,7 @@ class TTLockRepository extends BaseRepository {
     }
   }
 
-  Future<TTLockDetailResponse> getLockDetail(int lockId) async {
+  Future<LockDetailResponse> getLockDetail(int lockId) async {
     try {
       await refreshTokenIfNeeded();
       final accessToken = StorageService.ttlockToken?.accessToken;
@@ -525,7 +525,7 @@ class TTLockRepository extends BaseRepository {
     }
   }
 
-  Future<TTLockBaseResponse> renameLock({
+  Future<LockBaseResponse> renameLock({
     required int lockId,
     required String newName,
   }) async {
@@ -543,7 +543,7 @@ class TTLockRepository extends BaseRepository {
         lockAlias: newName,
       );
 
-      return TTLockBaseResponse.fromJson(response);
+      return LockBaseResponse.fromJson(response);
     } catch (e) {
       if (e is ErrorResponse) {
         rethrow;
@@ -552,7 +552,7 @@ class TTLockRepository extends BaseRepository {
     }
   }
 
-  Future<TTLockBaseResponse> setAutoLockTime({
+  Future<LockBaseResponse> setAutoLockTime({
     required int lockId,
     required int seconds,
     int type = 2,
@@ -572,7 +572,7 @@ class TTLockRepository extends BaseRepository {
         type: type,
       );
 
-      return TTLockBaseResponse.fromJson(response);
+      return LockBaseResponse.fromJson(response);
     } catch (e) {
       if (e is ErrorResponse) {
         rethrow;

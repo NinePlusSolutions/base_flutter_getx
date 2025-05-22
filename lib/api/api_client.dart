@@ -12,9 +12,11 @@ class ApiServices extends GetxService {
     super.onInit();
 
     final baseUrl = F.appFlavor?.toBaseurl ?? '';
+    final contentType = F.appFlavor?.toContentType ?? '';
 
     _dio = dio.Dio(dio.BaseOptions(
       baseUrl: baseUrl,
+      contentType: contentType,
       connectTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 60),
     ));
