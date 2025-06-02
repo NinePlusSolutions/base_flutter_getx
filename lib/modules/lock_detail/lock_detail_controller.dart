@@ -53,17 +53,19 @@ class LockDetailController extends BaseController<LockRepository> {
   @override
   void onInit() {
     super.onInit();
+    _initializeLockDetail();
+  }
 
+  Future<void> _initializeLockDetail() async {
     if (Get.arguments != null && Get.arguments is TTLockInitializedItem) {
       lockInfo = Get.arguments;
       lockData = lockInfo?.lockData;
 
-      Future.delayed(const Duration(milliseconds: 300), () async {
-        getLockOpenState();
-        await getLockDetail();
-        // await fetchLockDataFromAPI();
-        getLockRemoteUnlockSwitchState();
-      });
+      await Future.wait([
+        getLockOpenState(),
+        getLockDetail(),
+        getLockRemoteUnlockSwitchState(),
+      ]);
     }
   }
 
@@ -233,13 +235,9 @@ class LockDetailController extends BaseController<LockRepository> {
     }
   }
 
-  void getLockRemoteUnlockSwitchState() {
+  Future<void> getLockRemoteUnlockSwitchState() async {
     if (lockData == null) {
       AppLogger.i('Cannot get remote unlock state: Lock not connected');
-      showError(
-        'Connection Error',
-        'Please connect to the lock first',
-      );
       return;
     }
 
@@ -262,7 +260,9 @@ class LockDetailController extends BaseController<LockRepository> {
   }
 
   Future<void> remoteUnlock() async {
+    setLoading(true);
     if (lockInfo?.lockId == null) {
+      setLoading(false);
       showError(
         'Unlock Error',
         'Cannot perform remote unlock: Lock ID not available',
@@ -305,13 +305,16 @@ class LockDetailController extends BaseController<LockRepository> {
         throw ErrorResponse(message: errorMsg);
       }
     } finally {
+      setLoading(false);
       isRemoteActionInProgress.value = false;
       remoteAction.value = '';
     }
   }
 
   Future<void> remoteLock() async {
+    setLoading(true);
     if (lockInfo?.lockId == null) {
+      setLoading(false);
       showError(
         'Error',
         'Cannot perform remote lock: Lock ID not available',
@@ -360,6 +363,7 @@ class LockDetailController extends BaseController<LockRepository> {
         errorMessage,
       );
     } finally {
+      setLoading(false);
       isRemoteActionInProgress.value = false;
     }
   }
@@ -428,6 +432,27 @@ class LockDetailController extends BaseController<LockRepository> {
     } finally {
       isRenamingLock.value = false;
     }
+  }
+
+  Future<void> _resetLock() async {
+    if (lockData == null) {
+      AppLogger.e('Cannot reset lock: No lockData available');
+      throw ErrorResponse(message: 'Cannot reset lock before deletion: No lock data available');
+    }
+
+    AppLogger.i('Resetting lock before deletion');
+
+    final completer = Completer<void>();
+
+    TTLock.resetLock(lockData ?? '', () {
+      AppLogger.i('Lock reset successful before deletion');
+      completer.complete();
+    }, (errorCode, errorMsg) {
+      AppLogger.e('Failed to reset lock before deletion: $errorCode - $errorMsg');
+      completer.completeError(ErrorResponse(message: 'Failed to reset lock: $errorMsg'));
+    });
+
+    return completer.future;
   }
 
   Future<void> getPassageModeConfiguration() async {
@@ -634,7 +659,6 @@ class LockDetailController extends BaseController<LockRepository> {
     final completer = Completer<void>();
 
     // Convert from API format to SDK format
-    final isAllDay = config['isAllDay'] == 1;
     final startTime = config['startTime'] as int;
     final endTime = config['endTime'] as int;
     final weekDays = List<int>.from(config['weekDays']);
@@ -682,7 +706,9 @@ class LockDetailController extends BaseController<LockRepository> {
   }
 
   Future<void> deleteLock() async {
+    setLoading(true);
     if (lockInfo?.lockId == null) {
+      setLoading(false);
       showError(
         'Error',
         'Cannot delete lock: Lock ID not available',
@@ -705,6 +731,7 @@ class LockDetailController extends BaseController<LockRepository> {
       final response = await lockRepository.deleteLock(lockId);
 
       if (response['errcode'] == 0) {
+        setLoading(false);
         AppLogger.i('Lock deletion successful');
 
         showSuccess(
@@ -716,6 +743,7 @@ class LockDetailController extends BaseController<LockRepository> {
           Get.back(result: {'deleted': true});
         });
       } else {
+        setLoading(false);
         throw ErrorResponse(message: response['errmsg'] ?? 'Unknown error during lock deletion');
       }
     } catch (e) {
@@ -723,6 +751,7 @@ class LockDetailController extends BaseController<LockRepository> {
       if (e is ErrorResponse) {
         errorMessage = e.message;
       }
+      setLoading(false);
 
       AppLogger.e('Lock deletion failed: $e');
 
@@ -736,28 +765,8 @@ class LockDetailController extends BaseController<LockRepository> {
     }
   }
 
-  Future<void> _resetLock() async {
-    if (lockData == null) {
-      AppLogger.e('Cannot reset lock: No lockData available');
-      throw ErrorResponse(message: 'Cannot reset lock before deletion: No lock data available');
-    }
-
-    AppLogger.i('Resetting lock before deletion');
-
-    final completer = Completer<void>();
-
-    TTLock.resetLock(lockData ?? '', () {
-      AppLogger.i('Lock reset successful before deletion');
-      completer.complete();
-    }, (errorCode, errorMsg) {
-      AppLogger.e('Failed to reset lock before deletion: $errorCode - $errorMsg');
-      completer.completeError(ErrorResponse(message: 'Failed to reset lock: $errorMsg'));
-    });
-
-    return completer.future;
-  }
-
   void toggleRemoteUnlockSwitch() {
+    setLoading(true);
     if (lockData == null) {
       AppLogger.i('Cannot toggle remote unlock: Lock not connected');
       showError(
@@ -774,6 +783,7 @@ class LockDetailController extends BaseController<LockRepository> {
     AppLogger.i('Setting remote unlock switch to: $newState');
 
     TTLock.setLockRemoteUnlockSwitchState(newState, lockData ?? '', (updatedLockData) {
+      setLoading(false);
       remoteControlState.value = newState;
       isRemoteUnlockSettingInProgress.value = false;
 
@@ -784,6 +794,7 @@ class LockDetailController extends BaseController<LockRepository> {
         newState ? 'Remote unlock enabled successfully' : 'Remote unlock disabled successfully',
       );
     }, (errorCode, errorMsg) {
+      setLoading(false);
       isRemoteUnlockSettingInProgress.value = false;
 
       AppLogger.e('Failed to update remote unlock state: $errorCode - $errorMsg');
@@ -807,13 +818,19 @@ class LockDetailController extends BaseController<LockRepository> {
   }
 
   void unlockByBluetooth(String lockData) {
+    setLoading(true);
     if (isBluetoothActionInProgress.value) {
       return;
     }
     AppLogger.i('Sending unlock via Bluetooth');
     isBluetoothActionInProgress.value = true;
 
-    TTLock.controlLock(lockData, TTControlAction.unlock, (lockTime, electricQuantity, uniqueId) {
+    TTLock.controlLock(lockData, TTControlAction.unlock, (
+      lockTime,
+      electricQuantity,
+      uniqueId,
+    ) {
+      setLoading(false);
       AppLogger.i('Unlock successful. Battery: $electricQuantity%');
       isBluetoothActionInProgress.value = false;
       showSuccess(
@@ -821,6 +838,7 @@ class LockDetailController extends BaseController<LockRepository> {
         'Door unlocked successfully',
       );
     }, (errorCode, errorMsg) {
+      setLoading(false);
       AppLogger.e('Unlock failed');
       isBluetoothActionInProgress.value = false;
 
@@ -832,6 +850,7 @@ class LockDetailController extends BaseController<LockRepository> {
   }
 
   void lockByBluetooth(String lockData) {
+    setLoading(true);
     if (isBluetoothActionInProgress.value) {
       return;
     }
@@ -839,14 +858,30 @@ class LockDetailController extends BaseController<LockRepository> {
     AppLogger.i('Sending lock via Bluetooth');
 
     isBluetoothActionInProgress.value = true;
-    TTLock.controlLock(lockData, TTControlAction.lock, (lockTime, electricQuantity, uniqueId) {
-      AppLogger.i('Lock successful. Battery: $electricQuantity%');
+    TTLock.controlLock(lockData, TTControlAction.lock, (
+      lockTime,
+      electricQuantity,
+      uniqueId,
+    ) {
+      setLoading(false);
+      AppLogger.i(
+        'Lock successful. Battery: $electricQuantity%',
+      );
       isBluetoothActionInProgress.value = false;
-      showSuccess('Lock Success', 'Lock successfully');
+      showSuccess(
+        'Lock Success',
+        'Lock successfully',
+      );
     }, (errorCode, errorMsg) {
-      AppLogger.e('Lock failed: $errorCode - $errorMsg');
+      setLoading(false);
+      AppLogger.e(
+        'Lock failed: $errorCode - $errorMsg',
+      );
       isBluetoothActionInProgress.value = false;
-      showError('Lock Failed', 'Failed to lock: $errorMsg');
+      showError(
+        'Lock Failed',
+        errorMsg,
+      );
     });
   }
 }

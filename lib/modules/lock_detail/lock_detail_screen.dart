@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/lock_detail/lock_detail_controller.dart';
-import 'package:flutter_getx_boilerplate/routes/routes.dart';
+import 'package:flutter_getx_boilerplate/modules/lock_detail/widgets/lock_action_control.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:get/get.dart';
+
+import 'widgets/control_type_tabs.dart';
+import 'widgets/lock_dialog.dart';
+import 'widgets/lock_settings_sheet.dart';
+import 'widgets/lock_status_card.dart';
 
 class LockDetailScreen extends GetView<LockDetailController> {
   const LockDetailScreen({super.key});
@@ -23,18 +28,14 @@ class LockDetailScreen extends GetView<LockDetailController> {
       title: controller.lockInfo?.lockAlias ?? controller.lockInfo?.lockName ?? 'Unknown',
       elevation: 2,
       actions: [
-        _buildAction(context),
+        IconButton(
+          icon: Icon(
+            Icons.settings,
+            color: context.colors.surface,
+          ),
+          onPressed: () => _showSettingsBottomSheet(context),
+        ),
       ],
-    );
-  }
-
-  _buildAction(BuildContext context) {
-    return IconButton(
-      icon: Icon(
-        Icons.settings,
-        color: context.colors.surface,
-      ),
-      onPressed: () => _showSettingsBottomSheet(context),
     );
   }
 
@@ -45,67 +46,11 @@ class LockDetailScreen extends GetView<LockDetailController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildStatusCard(context),
+            LockStatusCard(
+              lockInfo: controller.lockInfo,
+              batteryLevel: controller.batteryLevel.value,
+            ),
             _buildLockControls(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusCard(BuildContext context) {
-    final lockInfo = controller.lockInfo;
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    lockInfo?.lockAlias ?? lockInfo?.lockAlias ?? 'Unknown',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                if (controller.batteryLevel.value > 0) ...[
-                  Column(
-                    children: [
-                      Obx(() => Icon(
-                            _getBatteryIcon(controller.batteryLevel.value),
-                            color: _getBatteryColor(controller.batteryLevel.value),
-                            size: 24,
-                          )),
-                      const SizedBox(height: 2),
-                      Obx(() => Text(
-                            '${controller.batteryLevel.value}%',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _getBatteryColor(controller.batteryLevel.value),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('MAC Address:', style: TextStyle(fontSize: 14)),
-                Text(
-                  lockInfo?.lockMac ?? 'N/A',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -117,78 +62,13 @@ class LockDetailScreen extends GetView<LockDetailController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-
-        // Control type tabs
-        _buildControlTypeTabs(context),
-
+        const ControlTypeTabs(),
         const SizedBox(height: 16),
-
-        // Control buttons based on selected type
-        controller.selectedControlType.value == 'remote'
-            ? _buildRemoteControls(context)
-            : _buildBluetoothControls(context),
-      ],
-    );
-  }
-
-  Widget _buildRemoteControls(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 32),
-        Obx(() {
-          return Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.teal,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: controller.isRemoteActionInProgress.value ? null : () => controller.remoteUnlock(),
-                  icon: controller.isRemoteActionInProgress.value && controller.remoteAction.value == 'unlock'
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.lock_open),
-                  label: const Text('REMOTE UNLOCK'),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.red.shade700,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: controller.isRemoteActionInProgress.value ? null : () => controller.remoteLock(),
-                  icon: controller.isRemoteActionInProgress.value && controller.remoteAction.value == 'lock'
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.lock),
-                  label: const Text('REMOTE LOCK'),
-                ),
-              ),
-            ],
-          );
-        }),
+        Obx(
+          () => LockActionControls(
+            controlType: controller.selectedControlType.value,
+          ),
+        ),
       ],
     );
   }
@@ -200,460 +80,12 @@ class LockDetailScreen extends GetView<LockDetailController> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.settings, size: 24),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Lock Settings',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Get.back(),
-                  ),
-                ],
-              ),
-              const Divider(),
-
-              ListTile(
-                leading: const Icon(Icons.vpn_key),
-                title: const Text('Manage Passcodes'),
-                subtitle: const Text('View and edit existing passcodes'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Get.back();
-                  Get.toNamed(
-                    Routes.passcodeManager,
-                    arguments: controller.lockInfo,
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.add_circle_outline),
-                title: const Text('Create Passcode'),
-                subtitle: const Text('Generate new lock passcodes'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Get.back();
-                  Get.toNamed(
-                    Routes.createPasscode,
-                    arguments: controller.lockInfo,
-                  );
-                },
-              ),
-
-              Obx(() => ListTile(
-                    leading: const Icon(Icons.router),
-                    title: const Text('Remote Control'),
-                    subtitle: const Text('Allow lock to be controlled via gateway'),
-                    trailing: controller.isRemoteUnlockSettingInProgress.value
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Switch(
-                            value: controller.remoteControlState.value,
-                            onChanged: (_) {
-                              Get.back();
-                              controller.toggleRemoteUnlockSwitch();
-                            },
-                            activeColor: Colors.teal,
-                          ),
-                  )),
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Rename Lock'),
-                subtitle: const Text('Change lock display name'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Get.back();
-                  _showRenameLockDialog(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.vpn_key),
-                title: const Text('Admin Passcode'),
-                subtitle: const Text('Change super passcode'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Get.back();
-                  _showAdminPasscodeDialog(context);
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.access_time),
-                title: const Text('Passage Mode'),
-                subtitle: const Text('Configure automatic unlocking periods'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Get.back();
-                  _showPassageModeDialog(context);
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.timelapse),
-                title: const Text('Auto-Lock Settings'),
-                subtitle: const Text('Configure automatic locking'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Get.back();
-                  _showAutoLockTimeDialog(context);
-                },
-              ),
-
-              const SizedBox(height: 16),
-              const Divider(),
-
-              // Advanced options
-              ListTile(
-                leading: const Icon(Icons.restart_alt, color: Colors.red),
-                title: const Text('Delete Lock', style: TextStyle(color: Colors.red)),
-                subtitle: const Text('Remove all data from lock'),
-                onTap: () {
-                  Get.back();
-                  _showDeleteLockConfirmationDialog(context);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildControlTypeTabs(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Obx(() => _buildControlTab(
-                  context: context,
-                  title: 'Remote',
-                  icon: Icons.wifi,
-                  isSelected: controller.selectedControlType.value == 'remote',
-                  onTap: () => controller.setControlType('remote'),
-                )),
-          ),
-          Expanded(
-            child: Obx(() => _buildControlTab(
-                  context: context,
-                  title: 'Bluetooth',
-                  icon: Icons.bluetooth,
-                  isSelected: controller.selectedControlType.value == 'bluetooth',
-                  onTap: () => controller.setControlType('bluetooth'),
-                )),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildControlTab({
-    required BuildContext context,
-    required String title,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? context.theme.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : Colors.grey[700],
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.grey[700],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBluetoothControls(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blue[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blue[100]!),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.info_outline, color: Colors.blue),
-              const SizedBox(width: 12),
-              Expanded(
-                child: controller.lockData == null
-                    ? const Text(
-                        'Bluetooth control requires being near the lock',
-                        style: TextStyle(color: Colors.blue, fontSize: 14),
-                      )
-                    : const Text(
-                        'Connected via Bluetooth',
-                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.teal,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  disabledBackgroundColor: Colors.grey[300],
-                ),
-                onPressed: (controller.lockData == null || controller.isBluetoothActionInProgress.value)
-                    ? null
-                    : () => controller.unlockByBluetooth(controller.lockData!),
-                icon: controller.isBluetoothActionInProgress.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.lock_open),
-                label: const Text('UNLOCK'),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.red.shade700,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  disabledBackgroundColor: Colors.grey[300],
-                ),
-                onPressed: (controller.lockData == null || controller.isBluetoothActionInProgress.value)
-                    ? null
-                    : () => controller.lockByBluetooth(controller.lockData!),
-                icon: controller.isBluetoothActionInProgress.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.lock),
-                label: const Text('LOCK'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  void _showDeleteLockConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Lock?'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'This will delete the lock from your account and remove all associated data including:',
-            ),
-            const SizedBox(height: 8),
-            const Text('• All eKeys'),
-            const Text('• All passcodes'),
-            const Text('• All cards and fingerprints'),
-            const Text('• All unlocking records'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'WARNING: This action cannot be undone.',
-                      style: TextStyle(
-                        color: Colors.red.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            child: const Text('CANCEL'),
-            onPressed: () => Navigator.pop(context),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: const Text('DELETE', style: TextStyle(fontWeight: FontWeight.bold)),
-            onPressed: () {
-              Navigator.pop(context);
-              controller.deleteLock();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRenameLockDialog(BuildContext context) {
-    final TextEditingController nameController = TextEditingController();
-    nameController.text = controller.lockInfo?.lockAlias ?? controller.lockInfo?.lockName ?? '';
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename Lock'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Enter a new name for your lock. This name will be displayed in the app.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Lock Name',
-                border: OutlineInputBorder(),
-              ),
-              maxLength: 20, // Reasonable length limit
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            child: const Text('CANCEL'),
-            onPressed: () => Navigator.pop(context),
-          ),
-          Obx(() => TextButton(
-                onPressed: controller.isRenamingLock.value
-                    ? null
-                    : () {
-                        Navigator.pop(context);
-                        controller.renameLock(nameController.text);
-                      },
-                child: controller.isRenamingLock.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('RENAME'),
-              )),
-        ],
-      ),
-    );
-  }
-
-  void _showAdminPasscodeDialog(BuildContext context) {
-    final TextEditingController passcodeController = TextEditingController();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Admin Passcode'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'The admin passcode can be used to unlock the door from the keypad. '
-              'It cannot be deleted and is only available to administrators.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passcodeController,
-              keyboardType: TextInputType.number,
-              maxLength: 9,
-              decoration: const InputDecoration(
-                labelText: 'New Admin Passcode',
-                hintText: 'Enter 4-9 digits',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            child: const Text('CANCEL'),
-            onPressed: () => Navigator.pop(context),
-          ),
-          Obx(() => TextButton(
-                onPressed: controller.isAdminPasscodeUpdateInProgress.value
-                    ? null
-                    : () {
-                        Navigator.pop(context);
-                        controller.updateAdminPasscode(passcodeController.text.trim());
-                      },
-                child: controller.isAdminPasscodeUpdateInProgress.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('UPDATE'),
-              )),
-        ],
+      builder: (context) => LockSettingsSheet(
+        onRenameTap: () => LockDialogs.showRenameDialog(context, controller),
+        onAdminPasscodeTap: () => LockDialogs.showAdminPasscodeDialog(context, controller),
+        onPassageModeTap: () => _showPassageModeDialog(context),
+        onAutoLockTap: () => _showAutoLockTimeDialog(context),
+        onDeleteTap: () => LockDialogs.showDeleteConfirmation(context, controller),
       ),
     );
   }
@@ -1098,30 +530,6 @@ class LockDetailScreen extends GetView<LockDetailController> {
         return 'Sun';
       default:
         return '';
-    }
-  }
-
-  IconData _getBatteryIcon(int level) {
-    if (level >= 80) {
-      return Icons.battery_full;
-    } else if (level >= 60) {
-      return Icons.battery_5_bar;
-    } else if (level >= 30) {
-      return Icons.battery_3_bar;
-    } else if (level >= 15) {
-      return Icons.battery_2_bar;
-    } else {
-      return Icons.battery_alert;
-    }
-  }
-
-  Color _getBatteryColor(int level) {
-    if (level >= 50) {
-      return Colors.green;
-    } else if (level >= 20) {
-      return Colors.orange;
-    } else {
-      return Colors.red;
     }
   }
 }
