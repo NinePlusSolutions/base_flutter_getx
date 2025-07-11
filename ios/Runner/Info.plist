@@ -47,5 +47,15 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		
+		<!-- Permissions for checkin features -->
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs camera access to take photos for checkin/checkout verification</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>This app needs location access to record your location during checkin/checkout</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>This app needs location access to record your location during checkin/checkout</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs photo library access to save checkin photos</string>
 	</dict>
 </plist>

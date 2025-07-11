@@ -9,4 +9,5 @@ abstract class Routes {
   static const register = '/register';
 
   static const home = '/';
+  static const checkin = '/checkin';
 }

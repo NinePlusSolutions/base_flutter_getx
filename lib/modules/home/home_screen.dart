@@ -70,6 +70,14 @@ class HomeScreen extends GetView<HomeController> {
                 onSearch: (p0) => Future.delayed(const Duration(seconds: 1)),
               ),
               const SizedBox(height: 8),
+              ButtonWidget(
+                text: "Checkin Management",
+                onPressed: () {
+                  Get.toNamed('/checkin');
+                },
+                icon: const Icon(Icons.access_time),
+              ),
+              const SizedBox(height: 8),
               ButtonWidget(text: "Inline button", onPressed: () {}),
               const SizedBox(height: 8),
               ButtonWidget(
@@ -82,8 +90,7 @@ class HomeScreen extends GetView<HomeController> {
                 text: "Icon button primary",
                 onPressed: () async {
                   SnackbarHelper.snackBarWithAction().then((value) {
-                    controller.showSuccess(
-                        "Success", "Success message: ${value.toString()}");
+                    controller.showSuccess("Success", "Success message: ${value.toString()}");
                   });
                 },
                 icon: const Icon(Icons.ad_units),

@@ -1,5 +1,6 @@
 import 'package:flutter_getx_boilerplate/modules/home/home.dart';
 import 'package:flutter_getx_boilerplate/modules/modules.dart';
+import 'package:flutter_getx_boilerplate/modules/checkin/checkin.dart';
 import 'package:get/get.dart';
 
 part 'app_routes.dart';
@@ -27,6 +28,11 @@ class AppPages {
       name: Routes.home,
       page: () => const HomeScreen(),
       binding: HomeBinding(),
+    ),
+    GetPage(
+      name: Routes.checkin,
+      page: () => const CheckinScreen(),
+      binding: CheckinBinding(),
     ),
   ];
 }
