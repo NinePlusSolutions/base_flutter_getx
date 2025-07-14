@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/shared/services/camera_service.dart';
 import 'package:flutter_getx_boilerplate/shared/services/location_service.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/camera/camera_preview_widget.dart';
+import 'package:flutter_getx_boilerplate/shared/widgets/image/image_viewer_widget.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
@@ -108,13 +109,28 @@ class CheckinController extends GetxController {
 
       capturedImages.insert(0, imageData);
 
+      // Save image to device gallery
+      final savedToGallery = await _cameraService.saveImageToGallery(
+        imageBase64,
+        filename: '${type}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+
+      if (savedToGallery) {
+        debugPrint('Image saved to gallery successfully');
+      } else {
+        debugPrint('Failed to save image to gallery');
+      }
+
       // Update local state
       checkinStatus.value = type == 'checkin' ? CheckinStatus.checkedIn : CheckinStatus.notCheckedIn;
 
       // Clear notes
       notes.clear();
 
-      Get.snackbar("Success", "$type completed successfully");
+      Get.snackbar(
+        "Success",
+        "$type completed successfully${savedToGallery ? ' and saved to gallery' : ''}",
+      );
     } catch (e) {
       Get.snackbar("Error", "Failed to perform $type: $e");
       _resetCheckinStatus();
@@ -130,6 +146,9 @@ class CheckinController extends GetxController {
         gpsText: currentPosition.value != null
             ? '${currentPosition.value!.latitude.toStringAsFixed(6)}, ${currentPosition.value!.longitude.toStringAsFixed(6)}'
             : null,
+        latitude: currentPosition.value?.latitude,
+        longitude: currentPosition.value?.longitude,
+        notes: notes.text.trim().isEmpty ? null : notes.text.trim(),
         onCapture: (imageBase64) async {
           Get.back(result: imageBase64);
         },
@@ -152,6 +171,23 @@ class CheckinController extends GetxController {
     } else {
       checkinStatus.value = CheckinStatus.notCheckedIn;
     }
+  }
+
+  void viewImageFullScreen(Map<String, dynamic> imageData) {
+    Get.to(
+      () => ImageViewerWidget(
+        imageBase64: imageData['imageBase64'],
+        imageData: imageData,
+      ),
+      fullscreenDialog: true,
+      transition: Transition.fadeIn,
+    );
+  }
+
+  // Delete captured image
+  void deleteImage(String imageId) {
+    capturedImages.removeWhere((image) => image['id'] == imageId);
+    Get.snackbar("Success", "Image deleted successfully");
   }
 
   bool get canCheckin => checkinStatus.value == CheckinStatus.notCheckedIn;

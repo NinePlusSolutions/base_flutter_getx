@@ -8,6 +8,9 @@ class CameraPreviewWidget extends StatefulWidget {
   final VoidCallback? onCancel;
   final String? locationText;
   final String? gpsText;
+  final double? latitude;
+  final double? longitude;
+  final String? notes;
 
   const CameraPreviewWidget({
     super.key,
@@ -15,6 +18,9 @@ class CameraPreviewWidget extends StatefulWidget {
     this.onCancel,
     this.locationText,
     this.gpsText,
+    this.latitude,
+    this.longitude,
+    this.notes,
   });
 
   @override
@@ -49,8 +55,9 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> {
       final imageBase64 = await _cameraService.takePictureWithWatermark(
         location: widget.locationText ?? 'Unknown Location',
         timestamp: DateTime.now(),
-        latitude: 0.0, // Will be provided by the caller
-        longitude: 0.0, // Will be provided by the caller
+        latitude: widget.latitude ?? 0.0,
+        longitude: widget.longitude ?? 0.0,
+        notes: widget.notes,
       );
 
       if (imageBase64 != null && widget.onCapture != null) {

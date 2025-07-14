@@ -5,8 +5,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:image/image.dart' as img;
+import 'package:flutter_getx_boilerplate/shared/services/watermark_service.dart';
+import 'package:gal/gal.dart';
 
 class CameraService extends GetxService {
   CameraController? _controller;
@@ -69,6 +69,7 @@ class CameraService extends GetxService {
     required DateTime timestamp,
     required double latitude,
     required double longitude,
+    String? notes,
   }) async {
     if (!isInitialized) {
       throw Exception('Camera not initialized');
@@ -77,75 +78,63 @@ class CameraService extends GetxService {
     try {
       final XFile picture = await _controller!.takePicture();
 
-      // Add watermark to image
-      final watermarkedImagePath = await _addWatermarkToImage(
-        picture.path,
+      // Read image bytes
+      final Uint8List imageBytes = await picture.readAsBytes();
+
+      // Add watermark using the new service
+      final Uint8List watermarkedImageBytes = await WatermarkService.addTextWatermarkToImage(
+        imageBytes: imageBytes,
         location: location,
         timestamp: timestamp,
         latitude: latitude,
         longitude: longitude,
+        notes: notes,
       );
 
       // Convert to base64
-      if (watermarkedImagePath != null) {
-        final bytes = await File(watermarkedImagePath).readAsBytes();
-        return base64Encode(bytes);
-      }
+      final String base64Image = base64Encode(watermarkedImageBytes);
 
-      return null;
+      // Clean up original file
+      await File(picture.path).delete();
+
+      return base64Image;
     } catch (e) {
-      debugPrint('Error taking picture: $e');
+      debugPrint('Error taking picture with watermark: $e');
       return null;
     }
   }
 
-  Future<String?> _addWatermarkToImage(
-    String imagePath, {
-    required String location,
-    required DateTime timestamp,
-    required double latitude,
-    required double longitude,
-  }) async {
+  // Save image to device gallery
+  Future<bool> saveImageToGallery(String base64Image, {String? filename}) async {
     try {
-      // Read the image
-      final File imageFile = File(imagePath);
-      final Uint8List imageBytes = await imageFile.readAsBytes();
-      final img.Image? originalImage = img.decodeImage(imageBytes);
+      final bytes = base64Decode(base64Image);
 
-      if (originalImage == null) return null;
+      // Request storage permission using Gal's built-in permission handler
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        await Gal.requestAccess();
+        // Check again after requesting
+        final hasAccessAfterRequest = await Gal.hasAccess();
+        if (!hasAccessAfterRequest) {
+          debugPrint('Gallery access permission denied');
+          return false;
+        }
+      }
 
-      // Create watermark text
-      final watermarkText = [
-        'Time: ${timestamp.toString().substring(0, 19)}',
-        'Location: $location',
-        'GPS: ${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}',
-      ].join('\n');
+      // Create filename if not provided
+      final String fileName = filename ?? 'Checkin_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Add text watermark (simplified version)
-      // Note: For better text rendering, consider using a more sophisticated image processing library
-      // For now, we'll just return the original image and handle watermark in UI layer
-      final img.Image watermarkedImage = img.copyResize(
-        originalImage,
-        width: originalImage.width,
-        height: originalImage.height,
+      // Save to device gallery using Gal
+      await Gal.putImageBytes(
+        bytes,
+        name: fileName,
       );
 
-      // TODO: Implement proper text watermarking
-      debugPrint('Watermark text: $watermarkText');
-
-      // Save watermarked image
-      final Directory tempDir = await getTemporaryDirectory();
-      final String watermarkedPath = '${tempDir.path}/watermarked_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-      await File(watermarkedPath).writeAsBytes(img.encodeJpg(watermarkedImage));
-
-      // Clean up original
-      await imageFile.delete();
-
-      return watermarkedPath;
+      debugPrint('Image saved to gallery successfully: $fileName');
+      return true;
     } catch (e) {
-      debugPrint('Error adding watermark: $e');
-      return null;
+      debugPrint('Error saving image to gallery: $e');
+      return false;
     }
   }
 
