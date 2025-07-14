@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:get/get.dart';
 
 class LocationService extends GetxService {
@@ -38,10 +37,12 @@ class LocationService extends GetxService {
       }
 
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+          // locationSettings: const LocationSettings(
+          //   accuracy: LocationAccuracy.best,
+          // ),
+          );
     } catch (e) {
-      debugPrint('Error getting current location: $e');
+      ('Error getting current location: $e');
       return null;
     }
   }

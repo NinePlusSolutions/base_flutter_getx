@@ -4,7 +4,6 @@ import 'package:flutter_getx_boilerplate/shared/enum/enum.dart';
 import 'package:flutter_getx_boilerplate/routes/navigator_helper.dart';
 import 'package:flutter_getx_boilerplate/shared/shared.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/image/image_widget.dart';
-import 'package:flutter_getx_boilerplate/shared/widgets/input/search_input.dart';
 import 'package:get/get.dart';
 
 class HomeScreen extends GetView<HomeController> {
@@ -59,64 +58,12 @@ class HomeScreen extends GetView<HomeController> {
                 ),
               ),
               const SizedBox(height: kDefaultPadding),
-              InputFieldWidget(
-                controller: controller.searchController,
-                hint: 'Search...',
-              ),
-              const SizedBox(height: 8),
-              SearchInputWidget(
-                screenName: "Home",
-                useSearch: true,
-                onSearch: (p0) => Future.delayed(const Duration(seconds: 1)),
-              ),
-              const SizedBox(height: 8),
               ButtonWidget(
                 text: "Checkin Management",
                 onPressed: () {
                   Get.toNamed('/checkin');
                 },
                 icon: const Icon(Icons.access_time),
-              ),
-              const SizedBox(height: 8),
-              ButtonWidget(text: "Inline button", onPressed: () {}),
-              const SizedBox(height: 8),
-              ButtonWidget(
-                text: "Out button",
-                type: ButtonType.outline,
-                onPressed: () {},
-              ),
-              const SizedBox(height: 8),
-              ButtonWidget(
-                text: "Icon button primary",
-                onPressed: () async {
-                  SnackbarHelper.snackBarWithAction().then((value) {
-                    controller.showSuccess("Success", "Success message: ${value.toString()}");
-                  });
-                },
-                icon: const Icon(Icons.ad_units),
-              ),
-              const SizedBox(height: 8),
-              ButtonWidget(
-                type: ButtonType.outline,
-                text: "Icon button outline",
-                onPressed: () {
-                  controller.showError("Error", "Error message");
-                },
-                icon: const Icon(Icons.ad_units),
-              ),
-              const SizedBox(height: 8),
-              ButtonWidget(
-                type: ButtonType.text,
-                text: "Text button",
-                onPressed: () {
-                  controller.showSuccess("Success", "Success message");
-                },
-              ),
-              ButtonWidget(
-                text: "Disabled button",
-                onPressed: () {},
-                icon: const Icon(Icons.ad_units),
-                enabled: false,
               ),
             ],
           ),
