@@ -4,7 +4,6 @@ import 'package:flutter_getx_boilerplate/shared/extension/extension.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/checkin/checkin_history_widget.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/widgets.dart';
 import 'package:get/get.dart';
-import 'dart:convert';
 
 class CheckinScreen extends GetView<CheckinController> {
   const CheckinScreen({super.key});
@@ -45,6 +44,8 @@ class CheckinScreen extends GetView<CheckinController> {
                 _buildNotesSection(),
                 const SizedBox(height: 20),
                 _buildActionButtons(),
+                const SizedBox(height: 20),
+                _buildIssueReportButton(),
               ],
             ),
           ),
@@ -229,173 +230,21 @@ class CheckinScreen extends GetView<CheckinController> {
     );
   }
 
-  Widget _buildHistorySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Recent History',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Get.to(
-                  () => CheckinHistoryWidget(),
-                  transition: Transition.rightToLeft,
-                );
-              },
-              child: const Text('View All'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (controller.capturedImages.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'No checkin history available',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          )
-        else
-          ...controller.capturedImages.take(5).map((imageData) {
-            final timestamp = DateTime.parse(imageData['timestamp']);
-            final formattedTime =
-                '${timestamp.day}/${timestamp.month}/${timestamp.year} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    imageData['type'] == 'checkin' ? Icons.login : Icons.logout,
-                    color: imageData['type'] == 'checkin' ? Colors.green : Colors.orange,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          imageData['type'] == 'checkin' ? 'Check In' : 'Check Out',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          formattedTime,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        if (imageData['address'] != null && imageData['address'].isNotEmpty)
-                          Text(
-                            imageData['address'],
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.photo, color: Colors.blue),
-                    onPressed: () {
-                      // Show captured image
-                      _showImageDialog(imageData);
-                    },
-                  ),
-                ],
-              ),
-            );
-          }),
-      ],
-    );
-  }
-
-  void _showImageDialog(Map<String, dynamic> imageData) {
-    Get.dialog(
-      Dialog(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    imageData['type'] == 'checkin' ? 'Check In Photo' : 'Check Out Photo',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.memory(
-                  base64Decode(imageData['imageBase64']),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: Icon(Icons.error, size: 48),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (imageData['address'] != null) Text('Location: ${imageData['address']}'),
-                  const SizedBox(height: 4),
-                  Text(
-                      'GPS: ${imageData['latitude']?.toStringAsFixed(6)}, ${imageData['longitude']?.toStringAsFixed(6)}'),
-                  const SizedBox(height: 4),
-                  Text('Time: ${DateTime.parse(imageData['timestamp']).toString().substring(0, 19)}'),
-                  if (imageData['notes'] != null) ...[
-                    const SizedBox(height: 4),
-                    Text('Notes: ${imageData['notes']}'),
-                  ],
-                ],
-              ),
-            ],
+  Widget _buildIssueReportButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Get.toNamed('/issue-report');
+        },
+        icon: const Icon(Icons.report_problem),
+        label: const Text('Report Issue'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red.shade600,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
         ),
       ),

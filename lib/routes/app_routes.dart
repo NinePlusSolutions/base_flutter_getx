@@ -10,4 +10,6 @@ abstract class Routes {
 
   static const home = '/';
   static const checkin = '/checkin';
+  static const issueReport = '/issue-report';
+  static const issueHistory = '/issue-history';
 }

@@ -22,20 +22,20 @@ class StorageService {
   static set themeModeStorage(AppThemeMode value) =>
       _sharedPreferences?.setInt(StorageConstants.themeMode, value.index);
 
-  static String? get token =>
-      _sharedPreferences?.getString(StorageConstants.token);
-  static set token(String? value) =>
-      _sharedPreferences?.setString(StorageConstants.token, value ?? '');
+  static String? get token => _sharedPreferences?.getString(StorageConstants.token);
+  static set token(String? value) => _sharedPreferences?.setString(StorageConstants.token, value ?? '');
 
-  static bool get firstInstall =>
-      _sharedPreferences?.getBool(StorageConstants.firstInstall) ?? true;
-  static set firstInstall(bool value) =>
-      _sharedPreferences?.setBool(StorageConstants.firstInstall, value);
+  static bool get firstInstall => _sharedPreferences?.getBool(StorageConstants.firstInstall) ?? true;
+  static set firstInstall(bool value) => _sharedPreferences?.setBool(StorageConstants.firstInstall, value);
 
-  static String? get lang =>
-      _sharedPreferences?.getString(StorageConstants.lang);
-  static set lang(String? value) =>
-      _sharedPreferences?.setString(StorageConstants.lang, value ?? '');
+  static String? get lang => _sharedPreferences?.getString(StorageConstants.lang);
+  static set lang(String? value) => _sharedPreferences?.setString(StorageConstants.lang, value ?? '');
+
+  /// Issue Reports storage
+  static String? get issueReportsJson => _sharedPreferences?.getString(StorageConstants.issueReports);
+
+  static set issueReportsJson(String? value) =>
+      _sharedPreferences?.setString(StorageConstants.issueReports, value ?? '');
 
   /// more code
   /// --------- ------------ -------------

@@ -5,4 +5,5 @@ class StorageConstants {
   static const String locale = 'locale';
   static const String firstInstall = 'firstInstall';
   static const String lang = 'lang';
+  static const String issueReports = 'issueReports';
 }

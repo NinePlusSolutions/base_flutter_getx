@@ -66,6 +66,21 @@ class HomeScreen extends GetView<HomeController> {
                 },
                 icon: const Icon(Icons.access_time),
               ),
+              const SizedBox(height: kDefaultPadding),
+              ButtonWidget(
+                text: "Report Issue",
+                onPressed: () {
+                  Get.toNamed('/issue-report');
+                },
+                icon: const Icon(Icons.report_problem),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  minimumSize: const Size.fromHeight(46),
+                ),
+                labelStyle: const TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
