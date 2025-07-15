@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/checkin/checkin_controller.dart';
-import 'package:flutter_getx_boilerplate/shared/constants/colors.dart';
+import 'package:flutter_getx_boilerplate/shared/extension/extension.dart';
+import 'package:flutter_getx_boilerplate/shared/widgets/checkin/checkin_history_widget.dart';
+import 'package:flutter_getx_boilerplate/shared/widgets/widgets.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 
@@ -10,12 +12,22 @@ class CheckinScreen extends GetView<CheckinController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Checkin Management'),
-        backgroundColor: ColorConstants.highlightPrimary,
-        foregroundColor: Colors.white,
-        elevation: 0,
+      backgroundColor: context.colors.surface,
+      appBar: AppBarWidget(
+        title: 'Checkin Management',
+        backgroundColor: context.colors.secondary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            color: context.colors.surface,
+            onPressed: () {
+              Get.to(
+                () => CheckinHistoryWidget(),
+                transition: Transition.rightToLeft,
+              );
+            },
+          ),
+        ],
       ),
       body: Obx(() {
         return RefreshIndicator(
@@ -33,8 +45,6 @@ class CheckinScreen extends GetView<CheckinController> {
                 _buildNotesSection(),
                 const SizedBox(height: 20),
                 _buildActionButtons(),
-                const SizedBox(height: 30),
-                _buildHistorySection(),
               ],
             ),
           ),
@@ -235,7 +245,10 @@ class CheckinScreen extends GetView<CheckinController> {
             ),
             TextButton(
               onPressed: () {
-                // TODO: Navigate to full history page
+                Get.to(
+                  () => CheckinHistoryWidget(),
+                  transition: Transition.rightToLeft,
+                );
               },
               child: const Text('View All'),
             ),

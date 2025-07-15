@@ -13,13 +13,14 @@ class HomeScreen extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBarWidget(
-        isCenter: false,
         title: 'HomeScreen',
+        backgroundColor: context.colors.secondary,
         elevation: 2,
         leadingWidth: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            color: context.colors.surface,
             onPressed: () {
               NavigatorHelper.toAuth();
             },
