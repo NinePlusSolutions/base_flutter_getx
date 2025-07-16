@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_getx_boilerplate/modules/checkin/checkin_controller.dart';
 import 'package:flutter_getx_boilerplate/shared/extension/extension.dart';
-import 'package:flutter_getx_boilerplate/shared/widgets/checkin/checkin_history_widget.dart';
+import 'package:flutter_getx_boilerplate/modules/checkin/widgets/checkin_history_widget.dart';
 import 'package:flutter_getx_boilerplate/shared/widgets/widgets.dart';
 import 'package:get/get.dart';
+
+import '../issue_report/widgets/location_card_widget.dart';
 
 class CheckinScreen extends GetView<CheckinController> {
   const CheckinScreen({super.key});
@@ -16,6 +18,15 @@ class CheckinScreen extends GetView<CheckinController> {
         title: 'Checkin Management',
         backgroundColor: context.colors.secondary,
         actions: [
+          Obx(() {
+            return IconButton(
+              icon: Icon(
+                controller.isOnline.value ? Icons.wifi : Icons.wifi_off,
+                color: controller.isOnline.value ? Colors.green : Colors.red,
+              ),
+              onPressed: () => _showConnectionInfo(context),
+            );
+          }),
           IconButton(
             icon: const Icon(Icons.history),
             color: context.colors.surface,
@@ -30,7 +41,7 @@ class CheckinScreen extends GetView<CheckinController> {
       ),
       body: Obx(() {
         return RefreshIndicator(
-          onRefresh: () => controller.getCurrentLocation(),
+          onRefresh: () => controller.refreshLocation(),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
@@ -44,8 +55,6 @@ class CheckinScreen extends GetView<CheckinController> {
                 _buildNotesSection(),
                 const SizedBox(height: 20),
                 _buildActionButtons(),
-                const SizedBox(height: 20),
-                _buildIssueReportButton(),
               ],
             ),
           ),
@@ -92,76 +101,168 @@ class CheckinScreen extends GetView<CheckinController> {
               ),
             ),
           ],
+          // Tracking information integrated into status card
+          if (controller.isTrackingEnabled.value) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.shade300),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    children: [
+                      const Icon(Icons.timer, size: 20, color: Colors.green),
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.trackingDurationText,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green,
+                        ),
+                      ),
+                      const Text(
+                        'Duration',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.grey.shade300,
+                  ),
+                  Column(
+                    children: [
+                      const Icon(Icons.location_history, size: 20, color: Colors.blue),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${controller.trackingHistory.length}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const Text(
+                        'Points',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.grey.shade300,
+                  ),
+                  Column(
+                    children: [
+                      Icon(
+                        controller.isOnline.value ? Icons.wifi : Icons.wifi_off,
+                        size: 20,
+                        color: controller.isOnline.value ? Colors.green : Colors.orange,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.isOnline.value ? 'Online' : 'Offline',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: controller.isOnline.value ? Colors.green : Colors.orange,
+                        ),
+                      ),
+                      const Text(
+                        'Status',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Location tracking will start after checkin',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showConnectionInfo(BuildContext context) {
+    final connectionInfo = controller.getConnectionInfo();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Connection Status'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  controller.isOnline.value ? Icons.wifi : Icons.wifi_off,
+                  color: controller.isOnline.value ? Colors.green : Colors.red,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  controller.isOnline.value ? 'Connected' : 'Disconnected',
+                  style: TextStyle(
+                    color: controller.isOnline.value ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text('Connection Type: ${controller.connectionType.value}'),
+            if (connectionInfo['lastConnectedTime'] != null) ...[
+              const SizedBox(height: 8),
+              Text('Last Connected: ${DateTime.parse(connectionInfo['lastConnectedTime']).toString()}'),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildLocationCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.location_on, color: Colors.blue),
-              const SizedBox(width: 8),
-              const Text(
-                'Current Location',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: controller.isLoading.value ? null : controller.getCurrentLocation,
-                icon: controller.isLoading.value
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-                label: const Text('Refresh'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (controller.currentAddress.value.isNotEmpty)
-            Text(
-              controller.currentAddress.value,
-              style: const TextStyle(fontSize: 14),
-            )
-          else
-            const Text(
-              'Location not available. Tap refresh to get current location.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          if (controller.currentPosition.value != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'GPS: ${controller.currentPosition.value!.latitude.toStringAsFixed(6)}, ${controller.currentPosition.value!.longitude.toStringAsFixed(6)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-                fontFamily: 'monospace',
-              ),
-            ),
-          ],
-        ],
-      ),
+    return LocationCardWidget(
+      position: controller.currentPosition.value,
+      address: controller.currentAddress.value,
+      isLoading: controller.isLoading.value,
+      onRefresh: controller.refreshLocation,
     );
   }
 
@@ -227,27 +328,6 @@ class CheckinScreen extends GetView<CheckinController> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildIssueReportButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          Get.toNamed('/issue-report');
-        },
-        icon: const Icon(Icons.report_problem),
-        label: const Text('Report Issue'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade600,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
     );
   }
 
