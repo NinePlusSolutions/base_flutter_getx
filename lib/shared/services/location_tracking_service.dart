@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:flutter_getx_boilerplate/shared/services/location_service.dart';
 import 'package:flutter_getx_boilerplate/shared/services/connectivity_service.dart';
 
-/// Location tracking model
+/// Location tracking data model
 class LocationTrackingData {
   final Position position;
   final String address;
@@ -23,40 +23,33 @@ class LocationTrackingData {
         'latitude': position.latitude,
         'longitude': position.longitude,
         'accuracy': position.accuracy,
-        'altitude': position.altitude,
-        'speed': position.speed,
-        'heading': position.heading,
         'address': address,
         'timestamp': timestamp.toIso8601String(),
         'isOnline': isOnline,
       };
 }
 
-/// Simplified realtime location tracking service
+/// Simplified location tracking service focused on core functionality
 class LocationTrackingService extends GetxService {
   final LocationService _locationService = Get.find<LocationService>();
   final ConnectivityService _connectivityService = Get.find<ConnectivityService>();
 
-  // Streams and controllers
+  // Core state
+  final isTracking = false.obs;
+  final trackingHistory = <LocationTrackingData>[].obs;
+  final currentTrackingData = Rx<LocationTrackingData?>(null);
+  final trackingStartTime = Rx<DateTime?>(null);
+
+  // Configuration
+  static const double _distanceFilter = 10.0; // meters
+  static const int _maxHistoryItems = 100;
+  static const LocationAccuracy _accuracy = LocationAccuracy.high;
+
+  // Internal
   StreamSubscription<Position>? _positionSubscription;
-  StreamSubscription<bool>? _connectivitySubscription;
   final StreamController<LocationTrackingData> _trackingController = StreamController<LocationTrackingData>.broadcast();
 
-  // Observable states
-  final isTracking = false.obs;
-  final currentTrackingData = Rx<LocationTrackingData?>(null);
-  final trackingHistory = <LocationTrackingData>[].obs;
-  final lastKnownPosition = Rx<Position?>(null);
-  final isOnline = true.obs;
-  final trackingStartTime = Rx<DateTime?>(null);
-  Timer? _durationUpdateTimer;
-
-  // Simplified configuration
-  static const double _distanceFilter = 10.0; // meters
-  static const int _maxHistoryItems = 50; // Reduced for simplicity
-  static const LocationAccuracy _desiredAccuracy = LocationAccuracy.high;
-
-  // Getters
+  // Public getters
   Stream<LocationTrackingData> get trackingStream => _trackingController.stream;
 
   Duration? get trackingDuration {
@@ -75,109 +68,40 @@ class LocationTrackingService extends GetxService {
     return '$hours:$minutes:$seconds';
   }
 
-  @override
-  void onInit() {
-    super.onInit();
-    _initializeConnectivityMonitoring();
-  }
-
-  /// Initialize connectivity monitoring
-  void _initializeConnectivityMonitoring() {
-    _connectivitySubscription = _connectivityService.connectivityStream.listen(
-      (isConnected) {
-        final wasOffline = !isOnline.value;
-        isOnline.value = isConnected;
-
-        if (wasOffline && isConnected && isTracking.value) {
-          // Reconnected - update location immediately
-          _updateLocationImmediately();
-          Get.snackbar(
-            'Connection Restored',
-            'Location tracking resumed',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 2),
-          );
-        } else if (!isConnected && isTracking.value) {
-          // Disconnected - show warning
-          Get.snackbar(
-            'Connection Lost',
-            'Location tracking continues offline',
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 3),
-          );
-        }
-      },
-    );
-  }
-
   /// Start location tracking
   Future<bool> startTracking() async {
     try {
       if (isTracking.value) {
-        debugPrint('Location tracking is already active');
+        debugPrint('Tracking already active');
         return true;
       }
 
-      // Check permissions
-      final hasPermission = await _locationService.requestLocationPermission();
-      if (!hasPermission) {
-        Get.snackbar(
-          'Permission Required',
-          'Location permission is required for tracking',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return false;
-      }
-
-      // Check location services
-      final locationEnabled = await _locationService.isLocationServicesEnabled();
-      if (!locationEnabled) {
-        Get.snackbar(
-          'Location Services Disabled',
-          'Please enable location services',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          mainButton: TextButton(
-            onPressed: () => _locationService.openLocationSettings(),
-            child: const Text('Settings', style: TextStyle(color: Colors.white)),
-          ),
-        );
-        return false;
-      }
+      // Validate permissions
+      if (!await _validatePermissions()) return false;
 
       // Get initial position
       final initialPosition = await _locationService.getCurrentLocation();
       if (initialPosition == null) {
-        Get.snackbar('Error', 'Failed to get initial location');
+        _showError('Failed to get initial location');
         return false;
       }
 
-      // Start tracking
+      // Initialize tracking
       isTracking.value = true;
       trackingStartTime.value = DateTime.now();
-      lastKnownPosition.value = initialPosition;
-
-      // Clear previous tracking data
       trackingHistory.clear();
 
-      // Initialize with current position
-      await _updateLocationData(initialPosition, forceUpdate: true);
+      // Add initial position
+      await _addLocationData(initialPosition, forceUpdate: true);
 
       // Start position stream
       _startPositionStream();
 
-      // Start duration update timer
-      _startDurationUpdateTimer();
-
+      debugPrint('Location tracking started');
       return true;
     } catch (e) {
-      debugPrint('Error starting location tracking: $e');
-      Get.snackbar('Error', 'Failed to start location tracking: $e');
+      debugPrint('Error starting tracking: $e');
+      _showError('Failed to start tracking');
       return false;
     }
   }
@@ -185,90 +109,91 @@ class LocationTrackingService extends GetxService {
   /// Stop location tracking
   Future<void> stopTracking() async {
     try {
-      if (!isTracking.value) {
-        debugPrint('Location tracking is not active');
-        return;
-      }
+      if (!isTracking.value) return;
 
-      // Cancel subscription
-      await _positionSubscription?.cancel();
+      _positionSubscription?.cancel();
       _positionSubscription = null;
 
-      // Stop duration timer
-      _stopDurationUpdateTimer();
-
-      // Update state
       isTracking.value = false;
       trackingStartTime.value = null;
 
-      debugPrint('Location tracking stopped. Total tracked locations: ${trackingHistory.length}');
+      debugPrint('Location tracking stopped. Total points: ${trackingHistory.length}');
     } catch (e) {
-      debugPrint('Error stopping location tracking: $e');
+      debugPrint('Error stopping tracking: $e');
     }
   }
 
-  /// Start position stream with simplified configuration
+  /// Validate permissions and services
+  Future<bool> _validatePermissions() async {
+    // Check location permission
+    if (!await _locationService.requestLocationPermission()) {
+      _showError('Location permission required');
+      return false;
+    }
+
+    // Check location services
+    if (!await _locationService.isLocationServicesEnabled()) {
+      _showError('Please enable location services');
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Start position stream
   void _startPositionStream() {
     final locationSettings = LocationSettings(
-      accuracy: _desiredAccuracy,
+      accuracy: _accuracy,
       distanceFilter: _distanceFilter.toInt(),
     );
 
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: locationSettings,
     ).listen(
-      (Position position) {
-        _updateLocationData(position);
-      },
+      (position) => _addLocationData(position),
       onError: (error) {
         debugPrint('Position stream error: $error');
+        // Auto-restart on error
         if (isTracking.value) {
-          // Try to restart stream after error
-          Timer(const Duration(seconds: 5), () {
-            if (isTracking.value) {
-              _startPositionStream();
-            }
+          Future.delayed(const Duration(seconds: 5), () {
+            if (isTracking.value) _startPositionStream();
           });
         }
       },
     );
   }
 
-  /// Update location data and notify listeners
-  Future<void> _updateLocationData(Position position, {bool forceUpdate = false}) async {
+  /// Add location data to tracking
+  Future<void> _addLocationData(Position position, {bool forceUpdate = false}) async {
     try {
-      // Check if we should update based on distance or time
-      if (!forceUpdate && lastKnownPosition.value != null) {
+      // Distance filter check
+      if (!forceUpdate && trackingHistory.isNotEmpty) {
+        final lastPosition = trackingHistory.first.position;
         final distance = Geolocator.distanceBetween(
-          lastKnownPosition.value!.latitude,
-          lastKnownPosition.value!.longitude,
+          lastPosition.latitude,
+          lastPosition.longitude,
           position.latitude,
           position.longitude,
         );
 
-        if (distance < _distanceFilter) {
-          return; // Skip update if distance is too small
-        }
+        if (distance < _distanceFilter) return;
       }
 
-      lastKnownPosition.value = position;
-
-      // Get address (only if online for accuracy)
+      // Get address
       String address = 'Unknown Location';
-      if (isOnline.value) {
-        try {
+      try {
+        if (_connectivityService.isConnected.value) {
           address = await _locationService.getAddressFromCoordinates(
             position.latitude,
             position.longitude,
           );
-        } catch (e) {
-          debugPrint('Error getting address: $e');
-          // Use last known address if available
-          address = currentTrackingData.value?.address ?? 'Unknown Location';
+        } else {
+          // Use last known address when offline
+          address = currentTrackingData.value?.address ?? 'Location unavailable (offline)';
         }
-      } else {
-        // Use last known address when offline
-        address = currentTrackingData.value?.address ?? 'Location unavailable (offline)';
+      } catch (e) {
+        debugPrint('Address lookup failed: $e');
+        address = currentTrackingData.value?.address ?? 'Unknown Location';
       }
 
       // Create tracking data
@@ -276,13 +201,11 @@ class LocationTrackingService extends GetxService {
         position: position,
         address: address,
         timestamp: DateTime.now(),
-        isOnline: isOnline.value,
+        isOnline: _connectivityService.isConnected.value,
       );
 
-      // Update current data
+      // Update state
       currentTrackingData.value = trackingData;
-
-      // Add to history
       trackingHistory.insert(0, trackingData);
 
       // Limit history size
@@ -293,29 +216,56 @@ class LocationTrackingService extends GetxService {
       // Notify listeners
       _trackingController.add(trackingData);
 
-      debugPrint('Location updated: ${position.latitude}, ${position.longitude} - $address');
+      debugPrint('Location updated: ${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}');
     } catch (e) {
-      debugPrint('Error updating location data: $e');
+      debugPrint('Error adding location data: $e');
     }
   }
 
-  /// Force immediate location update
-  Future<void> _updateLocationImmediately() async {
-    try {
-      final position = await _locationService.getCurrentLocation();
-      if (position != null) {
-        await _updateLocationData(position, forceUpdate: true);
-      }
-    } catch (e) {
-      debugPrint('Error in immediate location update: $e');
-    }
-  }
-
-  /// Get basic tracking statistics (simplified)
+  /// Get basic statistics
   Map<String, dynamic> getTrackingStats() {
+    if (trackingHistory.isEmpty) {
+      return {
+        'locationCount': 0,
+        'totalDistance': 0.0,
+        'averageSpeed': 0.0,
+        'maxSpeed': 0.0,
+        'isActive': isTracking.value,
+      };
+    }
+
+    double totalDistance = 0.0;
+    double maxSpeed = 0.0;
+    double totalSpeed = 0.0;
+    int validSpeedCount = 0;
+
+    for (int i = 1; i < trackingHistory.length; i++) {
+      final current = trackingHistory[i];
+      final previous = trackingHistory[i - 1];
+
+      // Calculate distance
+      final distance = Geolocator.distanceBetween(
+        previous.position.latitude,
+        previous.position.longitude,
+        current.position.latitude,
+        current.position.longitude,
+      );
+      totalDistance += distance;
+
+      // Track speed
+      final speed = current.position.speed;
+      if (speed >= 0) {
+        maxSpeed = speed > maxSpeed ? speed : maxSpeed;
+        totalSpeed += speed;
+        validSpeedCount++;
+      }
+    }
+
     return {
       'locationCount': trackingHistory.length,
-      'totalTime': trackingDuration ?? Duration.zero,
+      'totalDistance': totalDistance,
+      'averageSpeed': validSpeedCount > 0 ? totalSpeed / validSpeedCount : 0.0,
+      'maxSpeed': maxSpeed,
       'isActive': isTracking.value,
     };
   }
@@ -326,28 +276,20 @@ class LocationTrackingService extends GetxService {
     currentTrackingData.value = null;
   }
 
-  /// Start duration update timer for realtime duration display (more frequent)
-  void _startDurationUpdateTimer() {
-    _stopDurationUpdateTimer(); // Stop any existing timer
-    _durationUpdateTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      // Force reactive update of trackingDurationText every 500ms for smooth updates
-      if (trackingStartTime.value != null) {
-        trackingStartTime.refresh();
-      }
-    });
-  }
-
-  /// Stop duration update timer
-  void _stopDurationUpdateTimer() {
-    _durationUpdateTimer?.cancel();
-    _durationUpdateTimer = null;
+  /// Show error message
+  void _showError(String message) {
+    Get.snackbar(
+      'Tracking Error',
+      message,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+    );
   }
 
   @override
   void onClose() {
     _positionSubscription?.cancel();
-    _connectivitySubscription?.cancel();
-    _stopDurationUpdateTimer();
     _trackingController.close();
     super.onClose();
   }

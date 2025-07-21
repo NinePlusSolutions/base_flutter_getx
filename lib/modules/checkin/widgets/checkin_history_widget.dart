@@ -17,23 +17,16 @@ class CheckinHistoryWidget extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: Obx(() {
-        if (controller.capturedImages.isEmpty) {
+        if (controller.checkinHistory.isEmpty) {
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.photo_library_outlined,
-                  size: 64,
-                  color: Colors.grey,
-                ),
+                Icon(Icons.history, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
-                  'No images captured yet',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  'No checkin records yet',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               ],
             ),
@@ -42,36 +35,36 @@ class CheckinHistoryWidget extends StatelessWidget {
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: controller.capturedImages.length,
+          itemCount: controller.checkinHistory.length,
           itemBuilder: (context, index) {
-            final imageData = controller.capturedImages[index];
-            return _buildImageCard(context, imageData);
+            final record = controller.checkinHistory[index];
+            return _buildHistoryCard(record);
           },
         );
       }),
     );
   }
 
-  Widget _buildImageCard(BuildContext context, Map<String, dynamic> imageData) {
-    final timestamp = DateTime.parse(imageData['timestamp']);
-    final formattedTime =
-        '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}/${timestamp.year} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+  Widget _buildHistoryCard(Map<String, dynamic> record) {
+    final timestamp = DateTime.parse(record['timestamp']);
+    final formattedTime = _formatDateTime(timestamp);
+    final isCheckin = record['type'] == 'checkin';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image thumbnail
+          // Image with overlay
           GestureDetector(
-            onTap: () => controller.viewImageFullScreen(imageData),
+            onTap: () => controller.viewImageFullScreen(record),
             child: Container(
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 image: DecorationImage(
-                  image: MemoryImage(base64Decode(imageData['imageBase64'])),
+                  image: MemoryImage(base64Decode(record['imageBase64'])),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -95,16 +88,13 @@ class CheckinHistoryWidget extends StatelessWidget {
                       top: 12,
                       right: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: imageData['type'] == 'checkin' ? Colors.green : Colors.orange,
+                          color: isCheckin ? Colors.green : Colors.orange,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          imageData['type']?.toString().toUpperCase() ?? 'UNKNOWN',
+                          record['type'].toString().toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -117,11 +107,7 @@ class CheckinHistoryWidget extends StatelessWidget {
                     const Positioned(
                       bottom: 12,
                       right: 12,
-                      child: Icon(
-                        Icons.fullscreen,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                      child: Icon(Icons.fullscreen, color: Colors.white, size: 28),
                     ),
                   ],
                 ),
@@ -129,70 +115,49 @@ class CheckinHistoryWidget extends StatelessWidget {
             ),
           ),
 
-          // Image info
+          // Record details
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Text(
-                      formattedTime,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                // Time
+                _buildDetailRow(Icons.access_time, formattedTime),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        imageData['address'] ?? 'Unknown Location',
-                        style: const TextStyle(fontSize: 14),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+                
+                // Location
+                _buildDetailRow(Icons.location_on, record['address'] ?? 'Unknown Location'),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.gps_fixed, size: 16, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${imageData['latitude']?.toStringAsFixed(6)}, ${imageData['longitude']?.toStringAsFixed(6)}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
+                
+                // GPS coordinates
+                _buildDetailRow(
+                  Icons.gps_fixed,
+                  '${record['latitude']?.toStringAsFixed(6)}, ${record['longitude']?.toStringAsFixed(6)}',
+                  textStyle: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
                 ),
-                if (imageData['notes'] != null) ...[
+                
+                // Notes (if available)
+                if (record['notes'] != null) ...[
                   const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.note, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          imageData['notes'],
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildDetailRow(Icons.note, record['notes']),
                 ],
+
+                // Connection status
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      record['isOnline'] == true ? Icons.wifi : Icons.wifi_off,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      record['isOnline'] == true ? 'Online' : 'Offline',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -204,7 +169,7 @@ class CheckinHistoryWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => controller.viewImageFullScreen(imageData),
+                    onPressed: () => controller.viewImageFullScreen(record),
                     icon: const Icon(Icons.visibility),
                     label: const Text('View'),
                   ),
@@ -212,12 +177,10 @@ class CheckinHistoryWidget extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _showDeleteConfirmation(context, imageData),
+                    onPressed: () => _showDeleteDialog(record),
                     icon: const Icon(Icons.delete),
                     label: const Text('Delete'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                   ),
                 ),
               ],
@@ -228,21 +191,41 @@ class CheckinHistoryWidget extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, Map<String, dynamic> imageData) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Image'),
-        content: const Text('Are you sure you want to delete this image?'),
+  Widget _buildDetailRow(IconData icon, String text, {TextStyle? textStyle}) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: textStyle ?? const TextStyle(fontSize: 14),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showDeleteDialog(Map<String, dynamic> record) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Delete Record'),
+        content: const Text('Are you sure you want to delete this record?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Get.back(),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              controller.deleteImage(imageData['id']);
-              Navigator.of(context).pop();
+              controller.deleteRecord(record['id']);
+              Get.back();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),

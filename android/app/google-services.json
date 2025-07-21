@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "443391482789",
+    "firebase_url": "https://realtime-tracking-location-default-rtdb.firebaseio.com",
+    "project_id": "realtime-tracking-location",
+    "storage_bucket": "realtime-tracking-location.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443391482789:android:ce41b7844354451b25e64c",
+        "android_client_info": {
+          "package_name": "com.pixel.baseapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALhDdaE9tnQeUPIQp4aE7U5zj6SiFVeaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443391482789:android:fe1fc1a0bbc02fc925e64c",
+        "android_client_info": {
+          "package_name": "com.pixel.baseapp.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALhDdaE9tnQeUPIQp4aE7U5zj6SiFVeaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

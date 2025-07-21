@@ -16,318 +16,236 @@ enum CheckinStatus {
 }
 
 class CheckinController extends GetxController {
+  // Core services
   final CameraService _cameraService = Get.find<CameraService>();
   final LocationService _locationService = Get.find<LocationService>();
   late final LocationTrackingService _trackingService;
   late final ConnectivityService _connectivityService;
 
+  // Core state
   final checkinStatus = CheckinStatus.notCheckedIn.obs;
   final isLoading = false.obs;
   final notes = TextEditingController();
 
-  // Current location data
+  // Location data - simplified
   final currentPosition = Rx<Position?>(null);
   final currentAddress = ''.obs;
 
-  // Location tracking data
-  final isTrackingEnabled = false.obs;
-  final trackingHistory = <LocationTrackingData>[].obs;
-  final currentTrackingData = Rx<LocationTrackingData?>(null);
+  // Tracking state - simplified
+  final isTrackingActive = false.obs;
+  final trackingDuration = '00:00:00'.obs;
 
-  // Connectivity state
+  // Connectivity
   final isOnline = true.obs;
-  final connectionType = ''.obs;
+  final connectionType = 'Unknown'.obs;
 
-  // Simple list to store captured images with details
-  final capturedImages = <Map<String, dynamic>>[].obs;
+  // History - simplified structure
+  final checkinHistory = <Map<String, dynamic>>[].obs;
 
   // Stream subscriptions
   StreamSubscription<LocationTrackingData>? _trackingSubscription;
   StreamSubscription<bool>? _connectivitySubscription;
-  Timer? _trackingUpdateTimer;
 
   @override
   void onInit() {
     super.onInit();
     _initializeServices();
     _setupListeners();
-    getCurrentLocation();
+    _loadCurrentLocation();
   }
 
-  /// Initialize tracking and connectivity services
+  /// Initialize services
   void _initializeServices() {
-    try {
-      _connectivityService = Get.find<ConnectivityService>();
-    } catch (e) {
-      _connectivityService = Get.put(ConnectivityService());
-    }
-
-    try {
-      _trackingService = Get.find<LocationTrackingService>();
-    } catch (e) {
-      _trackingService = Get.put(LocationTrackingService());
-    }
+    _connectivityService = Get.find<ConnectivityService>();
+    _trackingService = Get.find<LocationTrackingService>();
   }
 
-  /// Setup listeners for tracking and connectivity
+  /// Setup essential listeners only
   void _setupListeners() {
-    // Listen to tracking data
+    // Track location updates
     _trackingSubscription = _trackingService.trackingStream.listen(
-      (LocationTrackingData data) {
-        currentTrackingData.value = data;
-        currentPosition.value = data.position;
-        currentAddress.value = data.address;
-
-        debugPrint('Location tracking update: ${data.position.latitude}, ${data.position.longitude}');
-      },
-      onError: (error) {
-        debugPrint('Tracking stream error: $error');
-      },
+      (data) => _updateLocationFromTracking(data),
+      onError: (error) => debugPrint('Tracking error: $error'),
     );
 
-    // Listen to tracking state
-    ever(_trackingService.isTracking, (bool isTracking) {
-      isTrackingEnabled.value = isTracking;
-      trackingHistory.assignAll(_trackingService.trackingHistory);
+    // Track connectivity
+    _connectivitySubscription = _connectivityService.connectivityStream.listen(
+      (connected) => _updateConnectivity(connected),
+    );
 
-      // Start/stop timer for tracking duration updates
+    // Track tracking status
+    ever(_trackingService.isTracking, (bool isTracking) {
+      isTrackingActive.value = isTracking;
       if (isTracking) {
-        _startTrackingUpdateTimer();
+        _startDurationUpdates();
       } else {
-        _stopTrackingUpdateTimer();
+        _stopDurationUpdates();
       }
     });
 
-    // Listen to connectivity changes
-    _connectivitySubscription = _connectivityService.connectivityStream.listen(
-      (bool connected) {
-        isOnline.value = connected;
-        connectionType.value = _connectivityService.connectionTypeText;
-
-        if (connected && isTrackingEnabled.value) {
-          Get.snackbar(
-            'Connection Restored',
-            'Location tracking resumed',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 2),
-          );
-        } else if (!connected && isTrackingEnabled.value) {
-          Get.snackbar(
-            'Connection Lost',
-            'Location tracking continues offline',
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 3),
-          );
-        }
-      },
-    );
-
-    // Initial connectivity state
+    // Initialize connectivity state
     isOnline.value = _connectivityService.isConnected.value;
     connectionType.value = _connectivityService.connectionTypeText;
   }
 
-  Future<void> getCurrentLocation() async {
-    // Use tracking data if available
-    if (isTrackingEnabled.value && currentTrackingData.value != null) {
-      currentPosition.value = currentTrackingData.value!.position;
-      currentAddress.value = currentTrackingData.value!.address;
-      return;
+  /// Update location from tracking service
+  void _updateLocationFromTracking(LocationTrackingData data) {
+    currentPosition.value = data.position;
+    currentAddress.value = data.address;
+  }
+
+  /// Update connectivity state
+  void _updateConnectivity(bool connected) {
+    isOnline.value = connected;
+    connectionType.value = _connectivityService.connectionTypeText;
+
+    if (!connected && isTrackingActive.value) {
+      _showConnectivityMessage('Offline mode - tracking continues', Colors.orange);
+    } else if (connected && isTrackingActive.value) {
+      _showConnectivityMessage('Online - tracking resumed', Colors.green);
     }
+  }
+
+  /// Load current location
+  Future<void> _loadCurrentLocation() async {
+    if (isTrackingActive.value) return; // Use tracking data if available
 
     try {
       isLoading.value = true;
-
       final position = await _locationService.getCurrentLocation();
       if (position != null) {
         currentPosition.value = position;
-        final address = await _locationService.getAddressFromCoordinates(
+        currentAddress.value = await _locationService.getAddressFromCoordinates(
           position.latitude,
           position.longitude,
         );
-        currentAddress.value = address;
-      } else {
-        Get.snackbar("Error", "Unable to get current location");
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to get location: $e");
+      _showError('Failed to get location: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Start location tracking (internal - auto start after checkin only)
-  Future<bool> _startLocationTracking() async {
-    try {
-      final success = await _trackingService.startTracking();
-      return success;
-    } catch (e) {
-      debugPrint('Error starting location tracking: $e');
-      return false;
-    }
-  }
-
-  /// Stop location tracking
-  Future<void> stopLocationTracking() async {
-    try {
-      await _trackingService.stopTracking();
-    } catch (e) {
-      debugPrint('Error stopping tracking: $e');
-    }
-  }
-
-  /// Start timer for tracking duration updates (more frequent for realtime)
-  void _startTrackingUpdateTimer() {
-    _stopTrackingUpdateTimer(); // Stop any existing timer
-    _trackingUpdateTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      // This will trigger UI updates for tracking duration display every 500ms
-      if (isTrackingEnabled.value) {
-        // Force reactive update of all tracking related observables
-        currentTrackingData.refresh();
-        trackingHistory.refresh();
-        // This triggers the getter trackingStatusText to update
-        isTrackingEnabled.refresh();
-      }
-    });
-  }
-
-  /// Stop tracking update timer
-  void _stopTrackingUpdateTimer() {
-    _trackingUpdateTimer?.cancel();
-    _trackingUpdateTimer = null;
-  }
-
+  /// Perform checkin
   Future<void> performCheckin() async {
-    await _performCheckinAction('checkin');
+    await _performAction('checkin');
   }
 
+  /// Perform checkout
   Future<void> performCheckout() async {
-    await _performCheckinAction('checkout');
+    await _performAction('checkout');
   }
 
-  Future<void> _performCheckinAction(String type) async {
+  /// Core action handler - simplified
+  Future<void> _performAction(String actionType) async {
     try {
       isLoading.value = true;
       checkinStatus.value = CheckinStatus.processing;
 
-      // Check camera permission
-      final hasCameraPermission = await _cameraService.requestCameraPermission();
-      if (!hasCameraPermission) {
-        Get.snackbar("Permission Required", "Camera permission is required for $type");
-        _resetCheckinStatus();
+      // Validate permissions and location
+      if (!await _validateRequirements()) {
+        _resetStatus();
         return;
       }
 
-      // Get current location (use fresh location for accurate capture)
-      await getCurrentLocation();
-      if (currentPosition.value == null) {
-        Get.snackbar("Location Error", "Failed to get current location");
-        _resetCheckinStatus();
-        return;
-      }
-
-      // Navigate to camera screen
-      final imageBase64 = await Get.to<String>(
-        () => _buildCameraScreen(type),
-        fullscreenDialog: true,
-      );
-
+      // Capture image
+      final imageBase64 = await _captureImage(actionType);
       if (imageBase64 == null) {
-        _resetCheckinStatus();
+        _resetStatus();
         return;
       }
 
-      // Save image to device gallery
-      await _cameraService.saveImageToGallery(
-        imageBase64,
-        filename: '${type}_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
+      // Handle tracking based on action
+      await _handleTracking(actionType);
 
-      // Start location tracking AFTER successful image capture for checkin
-      bool trackingStarted = false;
-      if (type == 'checkin') {
-        trackingStarted = await _startLocationTracking();
-      }
+      // Save record
+      _saveActionRecord(actionType, imageBase64);
 
-      // Create enhanced image data with tracking info
-      final imageData = await _createEnhancedImageData(type, imageBase64);
-      capturedImages.insert(0, imageData);
+      // Update status
+      _updateStatusAfterAction(actionType);
 
-      // Update local state
-      checkinStatus.value = type == 'checkin' ? CheckinStatus.checkedIn : CheckinStatus.notCheckedIn;
-
-      // For checkout, stop location tracking
-      if (type == 'checkout' && isTrackingEnabled.value) {
-        await stopLocationTracking();
-      }
-
-      // Clear notes
-      notes.clear();
-
-      // Single consolidated success message
-      String successMessage;
-      if (type == 'checkin') {
-        if (trackingStarted) {
-          successMessage = "Checkin successful! Location tracking is now active.";
-        } else {
-          successMessage = "Checkin completed but location tracking failed to start.";
-        }
-      } else {
-        successMessage = "Checkout completed successfully.";
-      }
-
-      Get.snackbar(
-        "Success",
-        successMessage,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-        snackPosition: SnackPosition.TOP,
-      );
+      // Show success
+      _showSuccessMessage(actionType);
     } catch (e) {
-      Get.snackbar("Error", "Failed to perform $type: $e");
-      _resetCheckinStatus();
+      _showError('$actionType failed: $e');
+      _resetStatus();
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Create enhanced image data with tracking information
-  Future<Map<String, dynamic>> _createEnhancedImageData(String type, String imageBase64) async {
-    final baseData = {
+  /// Validate requirements
+  Future<bool> _validateRequirements() async {
+    // Check camera permission
+    if (!await _cameraService.requestCameraPermission()) {
+      _showError('Camera permission required');
+      return false;
+    }
+
+    // Ensure location is available
+    await _loadCurrentLocation();
+    if (currentPosition.value == null) {
+      _showError('Location not available');
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Capture image
+  Future<String?> _captureImage(String actionType) async {
+    return await Get.to<String>(
+      () => _buildCameraScreen(actionType),
+      fullscreenDialog: true,
+    );
+  }
+
+  /// Handle tracking based on action
+  Future<void> _handleTracking(String actionType) async {
+    if (actionType == 'checkin') {
+      final success = await _trackingService.startTracking();
+      if (!success) {
+        debugPrint('Warning: Tracking failed to start');
+      }
+    } else if (actionType == 'checkout') {
+      await _trackingService.stopTracking();
+    }
+  }
+
+  /// Save action record - simplified
+  void _saveActionRecord(String actionType, String imageBase64) {
+    final record = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'type': type,
+      'type': actionType,
+      'timestamp': DateTime.now().toIso8601String(),
       'latitude': currentPosition.value!.latitude,
       'longitude': currentPosition.value!.longitude,
       'address': currentAddress.value,
       'imageBase64': imageBase64,
-      'timestamp': DateTime.now().toIso8601String(),
-      'notes': notes.text.trim().isEmpty ? null : notes.text.trim(),
+      'notes': notes.text.trim().isNotEmpty ? notes.text.trim() : null,
       'isOnline': isOnline.value,
-      'connectionType': connectionType.value,
     };
 
-    // Add tracking information if available
-    if (isTrackingEnabled.value) {
-      final trackingStats = _trackingService.getTrackingStats();
-      baseData.addAll({
-        'hasTracking': true,
-        'trackingDuration': _trackingService.trackingDurationText,
-        'trackingStats': trackingStats,
-        'trackingStartTime': _trackingService.trackingStartTime.value?.toIso8601String(),
-      });
-    } else {
-      baseData['hasTracking'] = false;
-    }
+    checkinHistory.insert(0, record);
 
-    return baseData;
+    // Save to gallery
+    _cameraService.saveImageToGallery(
+      imageBase64,
+      filename: '${actionType}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+
+    // Clear notes
+    notes.clear();
   }
 
-  Widget _buildCameraScreen(String type) {
+  /// Update status after action
+  void _updateStatusAfterAction(String actionType) {
+    checkinStatus.value = actionType == 'checkin' ? CheckinStatus.checkedIn : CheckinStatus.notCheckedIn;
+  }
+
+  /// Camera screen builder
+  Widget _buildCameraScreen(String actionType) {
     return Scaffold(
       body: CameraPreviewWidget(
         locationText: currentAddress.value,
@@ -336,108 +254,101 @@ class CheckinController extends GetxController {
             : null,
         latitude: currentPosition.value?.latitude,
         longitude: currentPosition.value?.longitude,
-        notes: notes.text.trim().isEmpty ? null : notes.text.trim(),
-        onCapture: (imageBase64) async {
-          Get.back(result: imageBase64);
-        },
-        onCancel: () {
-          Get.back();
-        },
+        notes: notes.text.trim().isNotEmpty ? notes.text.trim() : null,
+        onCapture: (imageBase64) => Get.back(result: imageBase64),
+        onCancel: () => Get.back(),
       ),
     );
   }
 
-  void _resetCheckinStatus() {
-    // Check last action to determine status
-    if (capturedImages.isNotEmpty) {
-      final lastAction = capturedImages.first['type'];
-      if (lastAction == 'checkin') {
-        checkinStatus.value = CheckinStatus.checkedIn;
-      } else {
-        checkinStatus.value = CheckinStatus.notCheckedIn;
-      }
-    } else {
-      checkinStatus.value = CheckinStatus.notCheckedIn;
-    }
+  /// Duration updates for tracking display
+  Timer? _durationTimer;
+  void _startDurationUpdates() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      trackingDuration.value = _trackingService.trackingDurationText;
+    });
   }
 
-  void viewImageFullScreen(Map<String, dynamic> imageData) {
-    Get.to(
-      () => ImageViewerWidget(
-        imageBase64: imageData['imageBase64'],
-        imageData: imageData,
-      ),
-      fullscreenDialog: true,
-      transition: Transition.fadeIn,
-    );
+  void _stopDurationUpdates() {
+    _durationTimer?.cancel();
+    _durationTimer = null;
+    trackingDuration.value = '00:00:00';
   }
 
-  // Delete captured image
-  void deleteImage(String imageId) {
-    capturedImages.removeWhere((image) => image['id'] == imageId);
-    Get.snackbar("Success", "Image deleted successfully");
+  /// Utility methods
+  void _resetStatus() {
+    checkinStatus.value = checkinHistory.isNotEmpty && checkinHistory.first['type'] == 'checkin'
+        ? CheckinStatus.checkedIn
+        : CheckinStatus.notCheckedIn;
   }
 
-  /// Force refresh location
-  Future<void> refreshLocation() async {
-    if (isTrackingEnabled.value) {
-      Get.snackbar(
-        'Location Update',
-        'Location updates automatically during tracking',
-        backgroundColor: Colors.blue,
-        colorText: Colors.white,
-      );
-    } else {
-      await getCurrentLocation();
-    }
+  void _showError(String message) {
+    Get.snackbar('Error', message, backgroundColor: Colors.red, colorText: Colors.white);
   }
 
-  /// Get tracking statistics
-  Map<String, dynamic> getTrackingStatistics() {
-    return _trackingService.getTrackingStats();
+  void _showSuccessMessage(String actionType) {
+    final message = actionType == 'checkin'
+        ? 'Checked in successfully! Tracking started.'
+        : 'Checked out successfully! Tracking stopped.';
+    Get.snackbar('Success', message, backgroundColor: Colors.green, colorText: Colors.white);
   }
 
-  /// Get connection information
-  Map<String, dynamic> getConnectionInfo() {
-    return _connectivityService.getConnectionInfo();
+  void _showConnectivityMessage(String message, Color color) {
+    Get.snackbar('Connection', message,
+        backgroundColor: color, colorText: Colors.white, duration: const Duration(seconds: 2));
   }
 
+  /// Public getters - simplified
   bool get canCheckin => checkinStatus.value == CheckinStatus.notCheckedIn;
   bool get canCheckout => checkinStatus.value == CheckinStatus.checkedIn;
-  bool get isProcessing => checkinStatus.value == CheckinStatus.processing;
 
   String get statusText {
     switch (checkinStatus.value) {
       case CheckinStatus.notCheckedIn:
-        return 'Not Checked In';
+        return 'Ready to Check In';
       case CheckinStatus.checkedIn:
-        return 'Checked In${isTrackingEnabled.value ? ' (Tracking)' : ''}';
+        return 'Checked In${isTrackingActive.value ? ' (Tracking)' : ''}';
       case CheckinStatus.processing:
         return 'Processing...';
     }
   }
 
-  String get trackingStatusText {
-    if (!isTrackingEnabled.value) return 'Tracking Inactive';
-    return 'Tracking Active';
-  }
-
-  String get trackingDurationText {
-    if (!isTrackingEnabled.value) return '00:00:00';
-    return _trackingService.trackingDurationText;
-  }
-
   String? get lastActionTime {
-    if (capturedImages.isEmpty) return null;
-    final timestamp = DateTime.parse(capturedImages.first['timestamp']);
-    return '${timestamp.day}/${timestamp.month}/${timestamp.year} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+    if (checkinHistory.isEmpty) return null;
+    final timestamp = DateTime.parse(checkinHistory.first['timestamp']);
+    return '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}/${timestamp.year} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
   }
+
+  /// Public methods
+  Future<void> refreshLocation() async {
+    if (!isTrackingActive.value) {
+      await _loadCurrentLocation();
+    }
+  }
+
+  void viewImageFullScreen(Map<String, dynamic> imageData) {
+    Get.to(
+        () => ImageViewerWidget(
+              imageBase64: imageData['imageBase64'],
+              imageData: imageData,
+            ),
+        fullscreenDialog: true);
+  }
+
+  void deleteRecord(String recordId) {
+    checkinHistory.removeWhere((record) => record['id'] == recordId);
+    Get.snackbar('Success', 'Record deleted');
+  }
+
+  Map<String, dynamic> getConnectionInfo() => _connectivityService.getConnectionInfo();
+  Map<String, dynamic> getTrackingStats() => _trackingService.getTrackingStats();
 
   @override
   void onClose() {
     _trackingSubscription?.cancel();
     _connectivitySubscription?.cancel();
-    _stopTrackingUpdateTimer();
+    _durationTimer?.cancel();
     notes.dispose();
     super.onClose();
   }

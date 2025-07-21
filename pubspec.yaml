@@ -38,6 +38,9 @@ dependencies:
   gal: ^2.3.0
   connectivity_plus: ^6.0.5
 
+  firebase_core: any
+  firebase_database: any
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

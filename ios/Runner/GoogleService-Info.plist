@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCsfUtb2x2uFwetFe0iDA6teM1BO47Av0E</string>
+	<key>GCM_SENDER_ID</key>
+	<string>443391482789</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.pixel.baseapp</string>
+	<key>PROJECT_ID</key>
+	<string>realtime-tracking-location</string>
+	<key>STORAGE_BUCKET</key>
+	<string>realtime-tracking-location.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:443391482789:ios:c0ef18c6185a48c425e64c</string>
+	<key>DATABASE_URL</key>
+	<string>https://realtime-tracking-location-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
