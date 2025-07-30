@@ -141,9 +141,9 @@ class CheckinScreen extends GetView<CheckinController> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Row(
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.info_outline, size: 16, color: Colors.grey),
           SizedBox(width: 8),
           Text(
